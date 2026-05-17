@@ -1,0 +1,317 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Staff | L'Héritage Gourmand{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="{% static 'img/herit.logo.png' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/variables.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Inter, Arial, sans-serif;
+            background: #f8f9fa;
+            color: #222;
+        }
+
+        .staff-topbar {
+            height: 64px;
+            background: #1A1A1A;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+        }
+
+        .staff-logo {
+            font-family: serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #D4AF37;
+        }
+
+        .staff-user {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .staff-user a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .staff-layout {
+            min-height: calc(100vh - 64px);
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            transition: grid-template-columns .25s ease;
+        }
+        body.staff-sidebar-collapsed .staff-layout {
+            grid-template-columns: 88px 1fr;
+        }
+
+        .staff-sidebar {
+            background: white;
+            border-right: 1px solid #e5e7eb;
+            padding: 20px;
+            transition: padding .25s ease;
+        }
+        .staff-sidebar-head {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 14px;
+        }
+        .staff-sidebar-toggle {
+            width: 42px;
+            height: 42px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            color: #8B4513;
+            border-radius: 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: .2s ease;
+        }
+        .staff-sidebar-toggle:hover {
+            background: #8B4513;
+            border-color: #8B4513;
+            color: #fff;
+        }
+
+        .staff-sidebar a {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 12px 14px;
+            border-radius: 10px;
+            color: #374151;
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+        .staff-sidebar a i {
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .staff-link-label {
+            white-space: nowrap;
+        }
+
+        .staff-sidebar a:hover,
+        .staff-sidebar a.active {
+            background: #8B4513;
+            color: white;
+        }
+
+        .staff-content {
+            padding: 28px;
+            overflow-y: auto;
+        }
+        body.staff-sidebar-collapsed .staff-sidebar {
+            padding: 20px 14px;
+        }
+        body.staff-sidebar-collapsed .staff-sidebar a {
+            justify-content: center;
+            padding: 12px;
+        }
+        body.staff-sidebar-collapsed .staff-link-label {
+            display: none;
+        }
+
+        .staff-card {
+            background: white;
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+        }
+
+        .btn-staff {
+            border: none;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary-staff {
+            background: #8B4513;
+            color: white;
+        }
+
+        .btn-outline-staff {
+            border: 1px solid #8B4513;
+            color: #8B4513;
+            background: white;
+        }
+
+        @media (max-width: 900px) {
+            .staff-layout {
+                grid-template-columns: 1fr;
+            }
+            body.staff-sidebar-collapsed .staff-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .staff-sidebar {
+                display: flex;
+                overflow-x: auto;
+                gap: 8px;
+            }
+            .staff-sidebar-head {
+                display: none;
+            }
+
+            .staff-sidebar a {
+                white-space: nowrap;
+            }
+            body.staff-sidebar-collapsed .staff-link-label {
+                display: inline;
+            }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<header class="staff-topbar">
+    <div class="staff-logo">L'Héritage Gourmand</div>
+
+    <div class="staff-user">
+        <span>
+            <i class="fas fa-user-circle"></i>
+            {{ request.user.get_full_name|default:request.user.username }}
+        </span>
+
+        <a href="{% url 'staffops:staff_profile' %}">
+            <i class="fas fa-id-card"></i>
+        </a>
+
+        <form method="post" action="{% url 'accounts:logout' %}" class="logout-form">
+            {% csrf_token %}
+            <button type="submit" class="logout-btn">
+                <i class="fas fa-power-off"></i>
+            </button>
+        </form>
+    </div>
+</header>
+
+<div class="staff-layout">
+    <aside class="staff-sidebar">
+        <div class="staff-sidebar-head">
+            <button type="button" class="staff-sidebar-toggle" id="staffSidebarToggle" aria-label="Réduire la sidebar">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        </div>
+
+        {% if request.user.role == 'MANAGER' %}
+            <a href="{% url 'staffops:manager_dashboard' %}" class="{% if active_page == 'manager' %}active{% endif %}">
+                <i class="fas fa-chart-line"></i><span class="staff-link-label">Manager</span>
+            </a>
+        {% endif %}
+
+        {% if request.user.role == 'CHEF' or request.user.role == 'MANAGER' %}
+            <a href="{% url 'staffops:chef' %}" class="{% if active_page == 'chef' %}active{% endif %}">
+                <i class="fas fa-fire"></i><span class="staff-link-label">Cuisine</span>
+            </a>
+        {% endif %}
+
+        {% if request.user.role == 'SERVEUR' or request.user.role == 'MANAGER' %}
+            <a href="{% url 'staffops:serveur' %}" class="{% if active_page == 'serveur' %}active{% endif %}">
+                <i class="fas fa-concierge-bell"></i><span class="staff-link-label">Service</span>
+            </a>
+        {% endif %}
+
+        {% if request.user.role == 'CAISSIER' or request.user.role == 'MANAGER' %}
+            <a href="{% url 'staffops:caissier' %}" class="{% if active_page == 'caissier' %}active{% endif %}">
+                <i class="fas fa-cash-register"></i><span class="staff-link-label">Caisse</span>
+            </a>
+            <a href="{% url 'staffops:commandes_history' %}" class="{% if active_page == 'commandes_history' %}active{% endif %}">
+                <i class="fas fa-history"></i><span class="staff-link-label">Historique</span>
+            </a>
+        {% endif %}
+
+        {% if request.user.role == 'MENAGE' or request.user.role == 'MANAGER' %}
+            <a href="{% url 'staffops:menage' %}" class="{% if active_page == 'menage' %}active{% endif %}">
+                <i class="fas fa-broom"></i><span class="staff-link-label">Entretien</span>
+            </a>
+        {% endif %}
+
+        {% if request.user.role == 'LIVREUR' or request.user.role == 'MANAGER' %}
+            <a href="{% url 'staffops:livreur' %}" class="{% if active_page == 'livreur' %}active{% endif %}">
+                <i class="fas fa-motorcycle"></i><span class="staff-link-label">Livraison</span>
+            </a>
+        {% endif %}
+
+        {% if request.user.role == 'MANAGER' %}
+            <a href="{% url 'admin_panel:staff' %}" class="{% if active_page == 'staff' %}active{% endif %}">
+               <i class="fas fa-users-cog"></i><span class="staff-link-label">Personnel</span>
+            </a>
+        {% endif %}
+
+         <a href="{% url 'staffops:staff_payments' %}" class="{% if active_page == 'payments' %}active{% endif %}">
+            <i class="fas fa-money-check-alt"></i><span class="staff-link-label">Mes paiements</span>
+        </a>
+
+        <a href="{% url 'staffops:staff_profile' %}" class="{% if active_page == 'profile' %}active{% endif %}">
+            <i class="fas fa-user"></i><span class="staff-link-label">Mon profil</span>
+        </a>
+
+    </aside>
+
+    <main class="staff-content">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+<script>
+    (function () {
+        const toggle = document.getElementById('staffSidebarToggle');
+        if (!toggle || window.innerWidth <= 900) return;
+
+        const body = document.body;
+        const applyState = (collapsed) => {
+            body.classList.toggle('staff-sidebar-collapsed', collapsed);
+            toggle.innerHTML = collapsed
+                ? '<i class="fas fa-chevron-right"></i>'
+                : '<i class="fas fa-chevron-left"></i>';
+        };
+
+        applyState(localStorage.getItem('staffSidebarCollapsed') === '1');
+
+        toggle.addEventListener('click', () => {
+            const collapsed = !body.classList.contains('staff-sidebar-collapsed');
+            applyState(collapsed);
+            localStorage.setItem('staffSidebarCollapsed', collapsed ? '1' : '0');
+        });
+    })();
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,1592 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}L'Héritage Gourmand{% endblock %}</title>
+
+    <link rel="icon" type="image/png" href="{% static 'img/herit.logo.png' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/variables.css' %}" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <style>
+      :root {
+        --nh: 72px;
+      }
+
+      /* ════════════════════════════════════════
+       CURSOR
+    ════════════════════════════════════════ */
+      /* ════════════════════════════════════════
+       NAVBAR
+    ════════════════════════════════════════ */
+      .main-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: var(--nh);
+        background: transparent;
+        backdrop-filter: blur(0);
+        -webkit-backdrop-filter: blur(0);
+        border-bottom: 1px solid transparent;
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        padding: 0 40px;
+        transition:
+          background 0.4s ease,
+          box-shadow 0.4s ease,
+          backdrop-filter 0.4s ease,
+          border-color 0.4s ease;
+      }
+      .main-header.scrolled {
+        background: rgba(8, 7, 5, 0.97);
+        backdrop-filter: blur(24px) saturate(1.5);
+        -webkit-backdrop-filter: blur(24px) saturate(1.5);
+        border-bottom-color: rgba(201, 146, 42, 0.08);
+        box-shadow: 0 4px 48px rgba(0, 0, 0, 0.45);
+      }
+
+      .nav-left {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 2px;
+        padding-right: 26px;
+      }
+      .nav-mid {
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        padding: 0 44px;
+      }
+      .nav-right {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding-left: 26px;
+      }
+      .nav-primary {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+      }
+
+      /* Logo */
+      .nav-logo-link {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+      }
+      .nav-logo-img {
+        height: 40px;
+        width: auto;
+        max-width: 148px;
+        object-fit: contain;
+        filter: brightness(0) invert(1);
+        opacity: 0.9;
+        transition: opacity 0.3s;
+      }
+      .nav-logo-link:hover .nav-logo-img {
+        opacity: 0.6;
+      }
+
+      .nav-orn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        width: 110px;
+      }
+      .nav-orn-line {
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(
+          to right,
+          transparent,
+          rgba(201, 146, 42, 0.35),
+          transparent
+        );
+      }
+      .nav-orn-dot {
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: var(--gold);
+        opacity: 0.45;
+      }
+
+      /* Nav item + link */
+      .nav-item {
+        position: relative;
+      }
+
+      .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-family: var(--font-display);
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.88);
+        text-decoration: none;
+        transition:
+          color 0.25s,
+          background 0.25s;
+        white-space: nowrap;
+        cursor: pointer;
+        background: none;
+        border: none;
+        position: relative;
+        overflow: hidden;
+      }
+      .nav-link .dd-chev {
+        font-size: 0.52rem;
+        opacity: 0.45;
+        transition:
+          transform 0.3s,
+          opacity 0.3s;
+      }
+      .nav-link:hover,
+      .nav-link.active,
+      .nav-item.open > .nav-link {
+        color: #fff;
+      }
+      .nav-item.open > .nav-link .dd-chev {
+        transform: rotate(180deg);
+        opacity: 0.9;
+      }
+      .nav-link.active {
+        color: var(--gold-light);
+      }
+
+      /* Shimmer underline on hover */
+      .nav-link::after {
+        content: "";
+        position: absolute;
+        bottom: 7px;
+        left: 14px;
+        right: 14px;
+        height: 1px;
+        background: var(--gold);
+        transform: scaleX(0);
+        transform-origin: center;
+        transition: transform 0.3s var(--ease-out);
+      }
+      .nav-link:hover::after,
+      .nav-link.active::after {
+        transform: scaleX(1);
+      }
+      .nav-link::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.05),
+          rgba(255, 255, 255, 0)
+        );
+        opacity: 0;
+        transition: opacity 0.25s;
+      }
+      .nav-link:hover::before,
+      .nav-link.active::before {
+        opacity: 1;
+      }
+
+      /* ════════════════════════════════════════
+         DROPDOWN — Luxury Classic
+      ════════════════════════════════════════ */
+      .dropdown-panel {
+        position: absolute;
+        top: calc(100% + 16px);
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        min-width: 340px;
+        background: rgba(13, 10, 6, 0.98);
+        backdrop-filter: blur(40px) saturate(1.4);
+        -webkit-backdrop-filter: blur(40px) saturate(1.4);
+        border-top: 1px solid rgba(201, 146, 42, 0.55);
+        border-radius: 0 0 3px 3px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(201, 146, 42, 0.08) inset;
+        padding: 28px 32px 24px;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.26s ease, transform 0.26s var(--ease-out), visibility 0.26s;
+        pointer-events: none;
+        z-index: 500;
+      }
+      .dropdown-panel::before { display: none; }
+
+      .nav-item.open .dropdown-panel {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+        pointer-events: all;
+      }
+
+      /* Small panel — right-aligned */
+      .dropdown-panel.dd-sm {
+        min-width: 270px;
+        left: auto;
+        right: 0;
+        transform: translateY(-10px);
+      }
+      .nav-item.open .dropdown-panel.dd-sm {
+        transform: translateY(0);
+      }
+
+      /* ── Section label ── */
+      .dd-section-lbl {
+        font-family: var(--font-sans);
+        font-size: 0.56rem;
+        letter-spacing: 0.26em;
+        text-transform: uppercase;
+        color: rgba(201, 146, 42, 0.5);
+        font-weight: 600;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .dd-section-lbl::before,
+      .dd-section-lbl::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: rgba(201, 146, 42, 0.18);
+      }
+
+      /* ── Menu rows ── */
+      .dd-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 0;
+        border-bottom: 1px solid rgba(201, 146, 42, 0.07);
+        text-decoration: none;
+        transition: none;
+        cursor: pointer;
+      }
+      .dd-row:last-of-type {
+        border-bottom: none;
+      }
+      .dd-row-text {}
+      .dd-row-main {
+        font-family: var(--font-display);
+        font-size: 1.08rem;
+        font-weight: 300;
+        font-style: italic;
+        color: rgba(255, 255, 255, 0.68);
+        display: block;
+        transition: color 0.22s;
+      }
+      .dd-row-sub {
+        font-family: var(--font-sans);
+        font-size: 0.6rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.2);
+        display: block;
+        margin-top: 2px;
+      }
+      .dd-row-arr {
+        font-size: 0.62rem;
+        color: transparent;
+        flex-shrink: 0;
+        margin-left: 12px;
+        transition: color 0.22s, transform 0.22s;
+      }
+      .dd-row:hover .dd-row-main { color: var(--gold-light); }
+      .dd-row:hover .dd-row-arr  { color: var(--gold); transform: translateX(4px); }
+
+      /* ── "View all" footer ── */
+      .dd-view-all {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 0 2px;
+        margin-top: 8px;
+        border-top: 1px dashed rgba(201, 146, 42, 0.14);
+        font-family: var(--font-sans);
+        font-size: 0.62rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.28);
+        text-decoration: none;
+        transition: color 0.22s;
+      }
+      .dd-view-all:hover { color: var(--gold-light); }
+      .dd-view-all i { font-size: 0.58rem; transition: transform 0.22s; }
+      .dd-view-all:hover i { transform: translateX(3px); }
+
+      /* ── Guest auth dropdown ── */
+      .dd-auth-greet {
+        font-family: var(--font-display);
+        font-size: 1.35rem;
+        font-weight: 300;
+        font-style: italic;
+        color: #fff;
+        margin-bottom: 5px;
+      }
+      .dd-auth-hint {
+        font-family: var(--font-sans);
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.28);
+        line-height: 1.55;
+        margin-bottom: 20px;
+      }
+      .dd-auth-sep {
+        height: 1px;
+        background: rgba(201, 146, 42, 0.14);
+      }
+      .dd-auth-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 0;
+        font-family: var(--font-display);
+        font-size: 1.02rem;
+        font-weight: 300;
+        font-style: italic;
+        color: rgba(255, 255, 255, 0.6);
+        text-decoration: none;
+        transition: color 0.22s;
+      }
+      .dd-auth-row:hover { color: var(--gold-light); }
+      .dd-auth-row-arr {
+        font-size: 0.6rem;
+        color: transparent;
+        transition: color 0.22s, transform 0.22s;
+      }
+      .dd-auth-row:hover .dd-auth-row-arr { color: var(--gold); transform: translateX(3px); }
+
+      /* ── Profile dropdown ── */
+      .dd-profile-head {
+        padding-bottom: 16px;
+        margin-bottom: 4px;
+        border-bottom: 1px solid rgba(201, 146, 42, 0.15);
+      }
+      .dd-profile-hello {
+        font-family: var(--font-sans);
+        font-size: 0.56rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.26);
+        margin-bottom: 3px;
+      }
+      .dd-profile-name {
+        font-family: var(--font-display);
+        font-size: 1.3rem;
+        font-weight: 300;
+        font-style: italic;
+        color: #fff;
+      }
+      .dd-profile-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 13px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        font-family: var(--font-display);
+        font-size: 0.95rem;
+        font-weight: 300;
+        font-style: italic;
+        color: rgba(255, 255, 255, 0.58);
+        text-decoration: none;
+        transition: color 0.22s;
+      }
+      .dd-profile-row:hover { color: var(--gold-light); }
+      .dd-profile-arr {
+        font-size: 0.58rem;
+        color: transparent;
+        transition: color 0.22s, transform 0.22s;
+      }
+      .dd-profile-row:hover .dd-profile-arr { color: var(--gold); transform: translateX(3px); }
+      .dd-profile-sep {
+        height: 1px;
+        background: rgba(201, 146, 42, 0.14);
+        margin: 6px 0;
+      }
+      .dd-profile-logout {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 13px 0 2px;
+        font-family: var(--font-sans);
+        font-size: 0.62rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.22);
+        background: none;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        transition: color 0.22s;
+      }
+      .dd-profile-logout:hover { color: rgba(220, 70, 50, 0.7); }
+
+      /* Nav utils */
+      .nav-sep {
+        width: 1px;
+        height: 18px;
+        background: rgba(255, 255, 255, 0.1);
+        flex-shrink: 0;
+        margin: 0 3px;
+      }
+
+      .nav-cart-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 0.82rem;
+        cursor: pointer;
+        position: relative;
+        transition:
+          background 0.25s,
+          border-color 0.25s,
+          color 0.25s;
+      }
+      .nav-cart-btn:hover {
+        background: rgba(201, 146, 42, 0.1);
+        color: var(--gold-light);
+      }
+      .nav-cart-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: var(--gold);
+        color: #fff;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        font-size: 0.58rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid rgba(8, 7, 5, 1);
+      }
+
+      .nav-auth-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 9px 18px;
+        border-radius: 8px;
+        font-family: var(--font-sans);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+        border: none;
+        white-space: nowrap;
+      }
+      .nav-auth-btn.ghost {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        color: rgba(255, 255, 255, 0.55);
+      }
+      .nav-auth-btn.ghost:hover {
+        border-color: rgba(255, 255, 255, 0.38);
+        color: #fff;
+      }
+      .nav-auth-btn.gold {
+        background: var(--gold);
+        color: #fff;
+        border: 1px solid var(--gold);
+      }
+      .nav-auth-btn.gold:hover {
+        background: var(--gold-hover);
+        border-color: var(--gold-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 22px rgba(201, 146, 42, 0.35);
+      }
+
+      .nav-profile-chip {
+        display: flex;
+        align-items: center;
+        padding: 0;
+        border-radius: 50%;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        transition: opacity 0.25s;
+      }
+      .nav-profile-chip:hover,
+      .nav-item.open .nav-profile-chip {
+        opacity: 0.75;
+      }
+      .p-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--gold), #a07020);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.78rem;
+        color: #fff;
+        transition: box-shadow 0.25s;
+      }
+      .nav-profile-chip:hover .p-avatar,
+      .nav-item.open .p-avatar {
+        box-shadow: 0 0 0 2px rgba(201, 146, 42, 0.45);
+      }
+      .p-name {
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .p-chev {
+        font-size: 0.5rem;
+        opacity: 0.38;
+        transition: transform 0.3s;
+      }
+      .nav-item.open .p-chev {
+        transform: rotate(180deg);
+        opacity: 0.8;
+      }
+      .nav-guest-chip {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.86);
+        cursor: pointer;
+        transition:
+          background 0.25s,
+          border-color 0.25s,
+          color 0.25s,
+          transform 0.25s;
+      }
+      .nav-guest-chip:hover,
+      .nav-item.open .nav-guest-chip {
+        background: rgba(201, 146, 42, 0.1);
+        color: var(--gold-light);
+        transform: translateY(-1px);
+      }
+      .nav-guest-chip i {
+        font-size: 0.95rem;
+      }
+      /* dd-auth-actions removed — using dd-auth-row instead */
+
+      /* Mobile toggle */
+      .nav-toggle {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        cursor: pointer;
+        margin-left: auto;
+      }
+      .nav-toggle span {
+        display: block;
+        width: 18px;
+        height: 1.5px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 2px;
+        transition:
+          transform 0.3s,
+          opacity 0.3s;
+      }
+      .nav-toggle.open span:nth-child(1) {
+        transform: translateY(6.5px) rotate(45deg);
+      }
+      .nav-toggle.open span:nth-child(2) {
+        opacity: 0;
+        transform: scaleX(0);
+      }
+      .nav-toggle.open span:nth-child(3) {
+        transform: translateY(-6.5px) rotate(-45deg);
+      }
+
+      /* Mobile drawer */
+      .nav-mob {
+        position: fixed;
+        top: var(--nh);
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(8, 7, 5, 0.98);
+        backdrop-filter: blur(20px);
+        z-index: 1999;
+        padding: 28px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        transform: translateX(105%);
+        transition: transform 0.42s var(--ease-out);
+        overflow-y: auto;
+      }
+      .nav-mob.open {
+        transform: translateX(0);
+      }
+      .nav-mob-link {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 20px;
+        border-radius: 12px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.52);
+        text-decoration: none;
+        transition:
+          background 0.2s,
+          color 0.2s;
+        background: none;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        font-family: var(--font-sans);
+        text-align: left;
+      }
+      .nav-mob-link i {
+        width: 18px;
+        text-align: center;
+        font-size: 0.85rem;
+        opacity: 0.45;
+      }
+      .nav-mob-link:hover,
+      .nav-mob-link.active {
+        background: rgba(201, 146, 42, 0.07);
+        color: #fff;
+      }
+      .nav-mob-link:hover i,
+      .nav-mob-link.active i {
+        opacity: 1;
+        color: var(--gold);
+      }
+      .nav-mob-sep {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.05);
+        margin: 10px 0;
+      }
+      .nav-mob-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .nav-mob-logout {
+        color: rgba(240, 80, 60, 0.65) !important;
+      }
+      .nav-mob-logout:hover {
+        color: rgba(240, 80, 60, 1) !important;
+        background: rgba(240, 80, 60, 0.06) !important;
+      }
+
+      /* ════════════════════════════════════════
+       CART DRAWER
+    ════════════════════════════════════════ */
+      .cart-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.65);
+        z-index: 3500;
+        backdrop-filter: blur(7px);
+      }
+      .cart-overlay.active {
+        display: block;
+      }
+
+      /* ════════════════════════════════════════
+         CART DRAWER — Luxury Edition
+      ════════════════════════════════════════ */
+      .cart-drawer {
+        position: fixed;
+        top: 0; right: -460px;
+        width: 420px; max-width: 96vw; height: 100vh;
+        background: #0c0a07;
+        border-top: 1px solid rgba(201, 146, 42, 0.45);
+        border-left: 1px solid rgba(201, 146, 42, 0.06);
+        z-index: 4000;
+        box-shadow: -32px 0 80px rgba(0, 0, 0, 0.6);
+        transition: right 0.48s var(--ease-out);
+        display: flex; flex-direction: column;
+      }
+      .cart-drawer.active { right: 0; }
+
+      /* Header */
+      .cart-head {
+        padding: 30px 36px 22px;
+        border-bottom: 1px solid rgba(201, 146, 42, 0.08);
+        display: flex; align-items: flex-start; justify-content: space-between;
+      }
+      .cart-head-label {
+        font-family: var(--font-sans);
+        font-size: 0.56rem; letter-spacing: 0.26em; text-transform: uppercase;
+        color: rgba(201, 146, 42, 0.48); margin-bottom: 6px;
+      }
+      .cart-head h3 {
+        font-family: var(--font-display);
+        font-size: 1.9rem; font-weight: 300; font-style: italic; color: #fff;
+        line-height: 1;
+      }
+      .cart-x {
+        background: none; border: none; cursor: pointer;
+        color: rgba(255, 255, 255, 0.18);
+        font-size: 1.15rem; line-height: 1;
+        padding: 0; margin-top: 4px;
+        transition: color 0.22s;
+        font-weight: 300;
+      }
+      .cart-x:hover { color: rgba(255, 255, 255, 0.6); }
+
+      /* Body */
+      .cart-body {
+        flex: 1; overflow-y: auto; padding: 24px 36px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(201, 146, 42, 0.14) transparent;
+      }
+
+      /* Items */
+      .mini-item {
+        display: flex; align-items: flex-start; justify-content: space-between;
+        gap: 16px; padding: 19px 0;
+        border-bottom: 1px solid rgba(201, 146, 42, 0.07);
+      }
+      .mini-item:last-child { border-bottom: none; }
+      .mini-item-main {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        flex: 1;
+        min-width: 0;
+      }
+      .mini-item-thumb {
+        width: 64px;
+        height: 64px;
+        border-radius: 14px;
+        overflow: hidden;
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(201, 146, 42, 0.08);
+      }
+      .mini-item-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .mini-item-copy {
+        flex: 1;
+        min-width: 0;
+      }
+      .mini-item-name {
+        font-family: var(--font-display);
+        font-size: 1.05rem; font-weight: 300; font-style: italic;
+        color: rgba(255, 255, 255, 0.88); margin-bottom: 5px; line-height: 1.2;
+      }
+      .mini-item-qty {
+        font-family: var(--font-sans);
+        font-size: 0.64rem; letter-spacing: 0.1em;
+        color: rgba(255, 255, 255, 0.24);
+      }
+      .mini-item-price {
+        font-family: var(--font-display);
+        font-size: 1.05rem; font-weight: 300;
+        color: var(--gold-light); white-space: nowrap; flex-shrink: 0;
+      }
+
+      /* Empty state */
+      .cart-empty {
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; text-align: center;
+        padding: 60px 20px 40px;
+        gap: 0;
+      }
+      .cart-empty-orn {
+        font-family: var(--font-display);
+        font-size: 2rem; color: rgba(201, 146, 42, 0.18);
+        margin-bottom: 28px; line-height: 1;
+        letter-spacing: 0.3em;
+      }
+      .cart-empty-title {
+        font-family: var(--font-display);
+        font-size: 1.2rem; font-weight: 300; font-style: italic;
+        color: rgba(255, 255, 255, 0.45); margin-bottom: 10px;
+      }
+      .cart-empty-text {
+        font-family: var(--font-sans);
+        font-size: 0.76rem; color: rgba(255, 255, 255, 0.2);
+        line-height: 1.7; max-width: 220px;
+      }
+
+      /* Footer */
+      .cart-foot {
+        padding: 20px 36px 32px;
+        border-top: 1px solid rgba(201, 146, 42, 0.08);
+      }
+      .cart-total-row {
+        display: flex; justify-content: space-between; align-items: flex-end;
+        margin-bottom: 22px; padding-bottom: 18px;
+        border-bottom: 1px dashed rgba(201, 146, 42, 0.12);
+      }
+      .cart-total-lbl {
+        font-family: var(--font-sans);
+        font-size: 0.56rem; letter-spacing: 0.22em; text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.2);
+      }
+      .cart-total-amt {
+        font-family: var(--font-display);
+        font-size: 2.2rem; font-weight: 300; color: #fff; line-height: 1;
+      }
+      .cart-actions { display: grid; gap: 10px; }
+
+      /* Elegant text link */
+      .c-btn-ghost {
+        display: flex; align-items: center; justify-content: center;
+        padding: 14px 0;
+        background: transparent; border: none;
+        font-family: var(--font-sans);
+        font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.28);
+        text-decoration: none;
+        position: relative;
+        transition: color 0.25s;
+      }
+      .c-btn-ghost::after {
+        content: ""; position: absolute; bottom: 8px;
+        left: 50%; right: 50%; height: 1px;
+        background: rgba(201, 146, 42, 0.38);
+        transition: left 0.35s var(--ease-out), right 0.35s var(--ease-out);
+      }
+      .c-btn-ghost:hover { color: rgba(255, 255, 255, 0.6); }
+      .c-btn-ghost:hover::after { left: 15%; right: 15%; }
+
+      /* Gold command button */
+      .c-btn-gold {
+        display: flex; align-items: center; justify-content: center;
+        padding: 18px 0;
+        background: var(--gold); color: #fff;
+        border: none; border-radius: 0;
+        font-family: var(--font-sans);
+        font-size: 0.7rem; font-weight: 700;
+        letter-spacing: 0.2em; text-transform: uppercase;
+        text-decoration: none; cursor: pointer;
+        position: relative; overflow: hidden;
+        transition: background 0.3s;
+      }
+      .c-btn-gold::before {
+        content: ""; position: absolute; inset: 0;
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateX(-115%) skewX(-16deg);
+        transition: transform 0.5s var(--ease-out);
+      }
+      .c-btn-gold:hover::before { transform: translateX(115%) skewX(-16deg); }
+      .c-btn-gold:hover { background: var(--gold-hover); }
+
+      /* ════════════════════════════════════════
+       LAYOUT
+    ════════════════════════════════════════ */
+      .page-wrap {
+        padding-top: var(--nh);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .page-content {
+        flex: 1;
+      }
+
+      /* ════════════════════════════════════════
+       FOOTER
+    ════════════════════════════════════════ */
+      .public-footer {
+        background: #07060400;
+        background: #080705;
+        color: rgba(255, 255, 255, 0.38);
+        padding: 80px 0 40px;
+        border-top: 1px solid rgba(201, 146, 42, 0.07);
+      }
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr 1fr 1fr;
+        gap: 52px;
+        padding-bottom: 60px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        margin-bottom: 36px;
+      }
+      .footer-logo-img {
+        height: 38px;
+        width: auto;
+        object-fit: contain;
+        filter: brightness(0) invert(1);
+        opacity: 0.55;
+        margin-bottom: 18px;
+      }
+      .footer-tagline {
+        font-size: 0.84rem;
+        line-height: 1.8;
+        max-width: 210px;
+        color: rgba(255, 255, 255, 0.28);
+      }
+      .footer-col-title {
+        font-size: 0.6rem;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--gold);
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .footer-col-title::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: rgba(201, 146, 42, 0.12);
+      }
+      .footer-links {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .footer-links a {
+        font-size: 0.84rem;
+        color: rgba(255, 255, 255, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 0;
+        transition:
+          color 0.2s,
+          gap 0.2s;
+        text-decoration: none;
+      }
+      .footer-links a::before {
+        content: "—";
+        color: var(--gold);
+        opacity: 0;
+        font-size: 0.7rem;
+        margin-right: 0;
+        max-width: 0;
+        overflow: hidden;
+        transition:
+          opacity 0.2s,
+          max-width 0.25s,
+          margin-right 0.25s;
+        white-space: nowrap;
+      }
+      .footer-links a:hover {
+        color: rgba(255, 255, 255, 0.8);
+        gap: 4px;
+      }
+      .footer-links a:hover::before {
+        opacity: 1;
+        max-width: 20px;
+        margin-right: 6px;
+      }
+      .footer-info {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .footer-info-item {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        font-size: 0.82rem;
+      }
+      .footer-info-item i {
+        color: var(--gold);
+        opacity: 0.65;
+        margin-top: 2px;
+        font-size: 0.74rem;
+        flex-shrink: 0;
+      }
+      .footer-bottom {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.73rem;
+        flex-wrap: wrap;
+        gap: 10px;
+        color: rgba(255, 255, 255, 0.18);
+      }
+      .footer-gold {
+        color: rgba(201, 146, 42, 0.45);
+      }
+
+      /* ════════════════════════════════════════
+       GLOBAL COMPONENTS
+    ════════════════════════════════════════ */
+      .reveal {
+        opacity: 0;
+        transform: translateY(48px);
+      }
+
+      /* ════════════════════════════════════════
+       RESPONSIVE
+    ════════════════════════════════════════ */
+      @media (max-width: 960px) {
+        .nav-left,
+        .nav-right {
+          display: none;
+        }
+        .nav-toggle {
+          display: flex;
+        }
+        .nav-mid {
+          padding: 0;
+          margin-right: auto;
+        }
+        .main-header {
+          padding: 0 20px;
+        }
+      }
+      @media (max-width: 640px) {
+        .footer-grid {
+          grid-template-columns: 1fr 1fr;
+          gap: 32px;
+        }
+      }
+      @media (max-width: 420px) {
+        .footer-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body>
+
+    <!-- ════ NAVBAR ════ -->
+    <header class="main-header" id="mainHeader">
+      <nav class="nav-left">
+        <div class="nav-item">
+          <a href="{% url 'home' %}" class="nav-link">Accueil</a>
+        </div>
+        <div class="nav-item has-dd" id="ddMenu">
+          <a href="{% url 'menu:list' %}" class="nav-link">
+            Menu <i class="fas fa-chevron-down dd-chev"></i>
+          </a>
+          <div class="dropdown-panel">
+            <div class="dd-section-lbl">Nos Créations</div>
+            <a href="{% url 'menu:list' %}" class="dd-row">
+              <span class="dd-row-text">
+                <span class="dd-row-main">Entrées</span>
+                <span class="dd-row-sub">Mises en bouche &amp; débuts</span>
+              </span>
+              <i class="fas fa-arrow-right dd-row-arr"></i>
+            </a>
+            <a href="{% url 'menu:list' %}" class="dd-row">
+              <span class="dd-row-text">
+                <span class="dd-row-main">Plats Principaux</span>
+                <span class="dd-row-sub">L'excellence au cœur du repas</span>
+              </span>
+              <i class="fas fa-arrow-right dd-row-arr"></i>
+            </a>
+            <a href="{% url 'menu:list' %}" class="dd-row">
+              <span class="dd-row-text">
+                <span class="dd-row-main">Desserts</span>
+                <span class="dd-row-sub">Douceurs &amp; créations sucrées</span>
+              </span>
+              <i class="fas fa-arrow-right dd-row-arr"></i>
+            </a>
+            <a href="{% url 'menu:list' %}" class="dd-row">
+              <span class="dd-row-text">
+                <span class="dd-row-main">Boissons &amp; Vins</span>
+                <span class="dd-row-sub">Accords mets et vins</span>
+              </span>
+              <i class="fas fa-arrow-right dd-row-arr"></i>
+            </a>
+            <a href="{% url 'menu:list' %}" class="dd-view-all">
+              <span>Voir l'intégralité du Menu</span>
+              <i class="fas fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      <div class="nav-mid">
+        <a href="{% url 'home' %}" class="nav-logo-link">
+          <img
+            src="{% static 'img/herit.logo.png' %}"
+            alt="L'Héritage Gourmand"
+            class="nav-logo-img"
+          />
+        </a>
+        <div class="nav-orn">
+          <div class="nav-orn-line"></div>
+          <div class="nav-orn-dot"></div>
+          <div class="nav-orn-line"></div>
+        </div>
+      </div>
+
+      <nav class="nav-right">
+        <div class="nav-primary">
+          <div class="nav-item">
+            <a href="{% url 'reservations:create' %}" class="nav-link"
+              >Réservation</a
+            >
+          </div>
+          <div class="nav-item">
+            <a href="{% url 'contact' %}" class="nav-link">Contact</a>
+          </div>
+        </div>
+        <div class="nav-actions">
+          <button class="nav-cart-btn" onclick="openCart()" title="Panier">
+            <i class="fas fa-shopping-bag"></i>
+            {% if cart_count > 0 %}
+            <span class="nav-cart-badge">{{ cart_count }}</span>
+            {% endif %}
+          </button>
+          <div class="nav-sep"></div>
+          {% if request.user.is_authenticated %}
+          <div class="nav-item has-dd" id="ddProfile">
+            <div class="nav-profile-chip">
+              <div class="p-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+            </div>
+            <div class="dropdown-panel dd-sm">
+              <div class="dd-profile-head">
+                <div class="dd-profile-hello">Bienvenue</div>
+                <div class="dd-profile-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+              </div>
+              <a href="{% url 'accounts:profile' %}" class="dd-profile-row">
+                <span>Mon Profil</span>
+                <i class="fas fa-arrow-right dd-profile-arr"></i>
+              </a>
+              <a href="{% url 'orders:my_orders' %}" class="dd-profile-row">
+                <span>Mes Commandes</span>
+                <i class="fas fa-arrow-right dd-profile-arr"></i>
+              </a>
+              <a href="{% url 'reservations:my_reservations' %}" class="dd-profile-row">
+                <span>Mes Réservations</span>
+                <i class="fas fa-arrow-right dd-profile-arr"></i>
+              </a>
+              {% if request.user.is_superuser or request.user.role == 'ADMIN' %}
+              <a href="{% url 'admin_panel:home' %}" class="dd-profile-row">
+                <span>Admin Panel</span>
+                <i class="fas fa-arrow-right dd-profile-arr"></i>
+              </a>
+              {% endif %}
+              <div class="dd-profile-sep"></div>
+              <form method="POST" action="{% url 'accounts:logout' %}" style="margin:0;">
+                {% csrf_token %}
+                <button type="submit" class="dd-profile-logout">
+                  <span>Déconnexion</span>
+                  <i class="fas fa-arrow-right" style="font-size:.55rem;"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+          {% else %}
+          <div class="nav-item has-dd" id="ddGuest">
+            <button class="nav-guest-chip" type="button" aria-label="Compte">
+              <i class="fas fa-user"></i>
+            </button>
+            <div class="dropdown-panel dd-sm">
+              <div class="dd-auth-greet">Bienvenue</div>
+              <p class="dd-auth-hint">Votre table vous attend.</p>
+              <div class="dd-auth-sep"></div>
+              <a href="{% url 'accounts:login' %}" class="dd-auth-row">
+                <span>Se connecter</span>
+                <i class="fas fa-arrow-right dd-auth-row-arr"></i>
+              </a>
+              <div class="dd-auth-sep"></div>
+              <a href="{% url 'accounts:signup_client' %}" class="dd-auth-row">
+                <span>Créer un compte</span>
+                <i class="fas fa-arrow-right dd-auth-row-arr"></i>
+              </a>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </nav>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
+
+    <!-- Mobile drawer -->
+    <div class="nav-mob" id="navMob">
+      <a href="{% url 'home' %}" class="nav-mob-link"
+        ><i class="fas fa-home"></i> Accueil</a
+      >
+      <a href="{% url 'menu:list' %}" class="nav-mob-link"
+        ><i class="fas fa-utensils"></i> Menu</a
+      >
+      <a href="{% url 'reservations:create' %}" class="nav-mob-link"
+        ><i class="fas fa-calendar-alt"></i> Réservation</a
+      >
+      <a href="{% url 'contact' %}" class="nav-mob-link"
+        ><i class="fas fa-envelope"></i> Contact</a
+      >
+      {% if request.user.is_superuser or request.user.role == 'ADMIN' %}
+      <a href="{% url 'admin_panel:home' %}" class="nav-mob-link"
+        ><i class="fas fa-shield-alt"></i> Admin Panel</a
+      >
+      {% endif %}
+      <div class="nav-mob-sep"></div>
+      <a
+        class="nav-mob-link"
+        href="#"
+        onclick="
+          closeMenu();
+          openCart();
+          return false;
+        "
+      >
+        <i class="fas fa-shopping-bag"></i> Panier {% if cart_count > 0 %}
+        <span
+          style="
+            margin-left: auto;
+            background: var(--gold);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.62rem;
+            font-weight: 700;
+          "
+          >{{ cart_count }}</span
+        >
+        {% endif %}
+      </a>
+      {% if request.user.is_authenticated %}
+      <a href="{% url 'orders:my_orders' %}" class="nav-mob-link"
+        ><i class="fas fa-box"></i> Mes Commandes</a
+      >
+      <a href="{% url 'reservations:my_reservations' %}" class="nav-mob-link"
+        ><i class="fas fa-calendar"></i> Mes Réservations</a
+      >
+      <a href="{% url 'accounts:profile' %}" class="nav-mob-link"
+        ><i class="fas fa-user"></i> Mon Profil</a
+      >
+      <div class="nav-mob-sep"></div>
+      <form
+        method="POST"
+        action="{% url 'accounts:logout' %}"
+        style="margin: 0"
+      >
+        {% csrf_token %}
+        <button type="submit" class="nav-mob-link nav-mob-logout">
+          <i class="fas fa-sign-out-alt"></i> Déconnexion
+        </button>
+      </form>
+      {% else %}
+      <div class="nav-mob-sep"></div>
+      <div class="nav-mob-actions">
+        <a
+          href="{% url 'accounts:login' %}"
+          class="nav-auth-btn ghost"
+          style="flex: 1; justify-content: center"
+          >Connexion</a
+        >
+        <a
+          href="{% url 'accounts:signup_client' %}"
+          class="nav-auth-btn gold"
+          style="flex: 1; justify-content: center"
+          >S'inscrire</a
+        >
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Cart overlay + drawer -->
+    <div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+    <aside class="cart-drawer" id="cartDrawer">
+      <div class="cart-head">
+        <div>
+          <div class="cart-head-label">L'Héritage Gourmand</div>
+          <h3>Votre Panier</h3>
+        </div>
+        <button class="cart-x" onclick="closeCart()">×</button>
+      </div>
+      <div class="cart-body">
+        {% if cart_items %}
+          {% for item in cart_items %}
+          <div class="mini-item">
+            <div class="mini-item-main">
+              <div class="mini-item-thumb">
+                {% if item.dish.image %}
+                  <img src="{{ item.dish.image.url }}" alt="{{ item.dish.name }}">
+                {% else %}
+                  <img src="{% static 'img/menu.png' %}" alt="{{ item.dish.name }}">
+                {% endif %}
+              </div>
+              <div class="mini-item-copy">
+                <div class="mini-item-name">{{ item.dish.name }}</div>
+                <div class="mini-item-qty">{{ item.quantity }} × {{ item.dish.price }} MAD</div>
+              </div>
+            </div>
+            <div class="mini-item-price">{{ item.subtotal }} MAD</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="cart-empty">
+            <div class="cart-empty-orn">✦ ✦ ✦</div>
+            <p class="cart-empty-title">Votre sélection est vide</p>
+            <p class="cart-empty-text">Parcourez notre menu et composez<br>votre repas d'exception.</p>
+          </div>
+        {% endif %}
+      </div>
+      <div class="cart-foot">
+        {% if cart_items %}
+        <div class="cart-total-row">
+          <span class="cart-total-lbl">Total</span>
+          <span class="cart-total-amt">{{ cart_total }} <small style="font-size:0.9rem;opacity:.35">MAD</small></span>
+        </div>
+        <div class="cart-actions">
+          <a href="{% url 'orders:cart' %}" class="c-btn-ghost">Voir le panier</a>
+          <a href="{% url 'orders:checkout' %}" class="c-btn-gold">Commander</a>
+        </div>
+        {% else %}
+        <a href="{% url 'menu:list' %}" class="c-btn-gold" style="display:block;text-align:center">Découvrir le menu</a>
+        {% endif %}
+      </div>
+    </aside>
+
+    <!-- Page wrap -->
+    <div class="page-wrap">
+      <main class="page-content">{% block content %}{% endblock %}</main>
+
+      <footer class="public-footer">
+        <div class="container">
+          <div class="footer-grid">
+            <div>
+              <img
+                src="{% static 'img/herit.logo.png' %}"
+                alt="L'Héritage"
+                class="footer-logo-img"
+              />
+              <p class="footer-tagline">
+                Une expérience gastronomique où le savoir-faire ancestral
+                rencontre l'élégance contemporaine.
+              </p>
+            </div>
+            <div>
+              <div class="footer-col-title">Navigation</div>
+              <div class="footer-links">
+                <a href="{% url 'home' %}">Accueil</a>
+                <a href="{% url 'menu:list' %}">Notre Menu</a>
+                <a href="{% url 'reservations:create' %}">Réservations</a>
+                <a href="{% url 'contact' %}">Contact</a>
+              </div>
+            </div>
+            <div>
+              <div class="footer-col-title">Mon Espace</div>
+              <div class="footer-links">
+                {% if request.user.is_authenticated %}
+                <a href="{% url 'accounts:profile' %}">Mon Profil</a>
+                <a href="{% url 'orders:my_orders' %}">Mes Commandes</a>
+                <a href="{% url 'reservations:my_reservations' %}"
+                  >Mes Réservations</a
+                >
+                {% else %}
+                <a href="{% url 'accounts:login' %}">Connexion</a>
+                <a href="{% url 'accounts:signup_client' %}">Créer un compte</a>
+                {% endif %}
+              </div>
+            </div>
+            <div>
+              <div class="footer-col-title">Contact</div>
+              <div class="footer-info">
+                <div class="footer-info-item">
+                  <i class="fas fa-map-marker-alt"></i
+                  ><span>33 Rue de la Gastronomie, Casablanca</span>
+                </div>
+                <div class="footer-info-item">
+                  <i class="fas fa-phone"></i><span>+212 1 23 45 67 89</span>
+                </div>
+                <div class="footer-info-item">
+                  <i class="fas fa-envelope"></i
+                  ><span>contact@lheritage.ma</span>
+                </div>
+                <div class="footer-info-item">
+                  <i class="fas fa-clock"></i><span>Mar – Dim : 12h – 23h</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="footer-bottom">
+            <span>© 2026 L'Héritage Gourmand. Tous droits réservés.</span>
+            <span class="footer-gold">Fait avec passion ✦ Maroc</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- GSAP + ScrollTrigger -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+    <script>
+      gsap.registerPlugin(ScrollTrigger);
+
+      /* ── Cursor ── */
+      /* ── Navbar scroll state ── */
+      const mainHeader = document.getElementById("mainHeader");
+      const syncHeaderState = () => {
+        mainHeader.classList.toggle("scrolled", window.scrollY > 64);
+      };
+      syncHeaderState();
+      window.addEventListener("scroll", syncHeaderState, { passive: true });
+
+      /* ── Dropdown logic ── */
+      document.querySelectorAll(".has-dd").forEach((item) => {
+        let t;
+        const open = () => {
+          clearTimeout(t);
+          document.querySelectorAll(".has-dd").forEach((i) => {
+            if (i !== item) i.classList.remove("open");
+          });
+          item.classList.add("open");
+        };
+        const close = () => {
+          t = setTimeout(() => item.classList.remove("open"), 180);
+        };
+        item.addEventListener("mouseenter", open);
+        item.addEventListener("mouseleave", close);
+        const panel = item.querySelector(".dropdown-panel");
+        if (panel) {
+          panel.addEventListener("mouseenter", () => clearTimeout(t));
+          panel.addEventListener("mouseleave", close);
+        }
+      });
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".has-dd"))
+          document
+            .querySelectorAll(".has-dd")
+            .forEach((i) => i.classList.remove("open"));
+      });
+
+      /* ── Active link ── */
+      const _path = window.location.pathname;
+      document.querySelectorAll(".nav-link, .nav-mob-link").forEach((l) => {
+        const h = l.getAttribute("href");
+        if (h && (h === _path || (h !== "/" && _path.startsWith(h))))
+          l.classList.add("active");
+      });
+
+      /* ── Navbar entrance ── */
+      gsap.from(".main-header", {
+        y: -20,
+        opacity: 0,
+        duration: 0.9,
+        ease: "power3.out",
+        delay: 0.1,
+      });
+      gsap.from(".nav-left .nav-item", {
+        y: -8,
+        opacity: 0,
+        stagger: 0.07,
+        duration: 0.5,
+        ease: "power2.out",
+        delay: 0.4,
+      });
+      gsap.from(".nav-mid", {
+        y: -8,
+        opacity: 0,
+        duration: 0.6,
+        ease: "power2.out",
+        delay: 0.3,
+      });
+      gsap.from(".nav-right > *", {
+        y: -8,
+        opacity: 0,
+        stagger: 0.06,
+        duration: 0.5,
+        ease: "power2.out",
+        delay: 0.5,
+      });
+
+      /* ── Mobile menu ── */
+      const navToggle = document.getElementById("navToggle");
+      const navMob = document.getElementById("navMob");
+      function openMenu() {
+        navToggle.classList.add("open");
+        navMob.classList.add("open");
+        document.body.style.overflow = "hidden";
+      }
+      function closeMenu() {
+        navToggle.classList.remove("open");
+        navMob.classList.remove("open");
+        document.body.style.overflow = "";
+      }
+      navToggle.addEventListener("click", () =>
+        navMob.classList.contains("open") ? closeMenu() : openMenu(),
+      );
+
+      /* ── Cart ── */
+      function openCart() {
+        document.getElementById("cartDrawer").classList.add("active");
+        document.getElementById("cartOverlay").classList.add("active");
+        document.body.style.overflow = "hidden";
+        closeMenu();
+      }
+      function closeCart() {
+        document.getElementById("cartDrawer").classList.remove("active");
+        document.getElementById("cartOverlay").classList.remove("active");
+        document.body.style.overflow = "";
+      }
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeCart();
+          closeMenu();
+        }
+      });
+
+      /* ── Global scroll reveals ── */
+      gsap.utils.toArray(".reveal").forEach((el) => {
+        gsap.to(el, {
+          y: 0,
+          opacity: 1,
+          duration: 1.1,
+          ease: "power3.out",
+          scrollTrigger: { trigger: el, start: "top 88%", once: true },
+        });
+      });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

@@ -1,0 +1,61 @@
+<div class="modal" id="deleteIngredientModal{{ ingredient.id }}">
+    <div class="modal-card" style="max-width: 520px;">
+        <div class="modal-header">
+            <h2>Confirmer la suppression</h2>
+
+            <button type="button"
+                    class="close-btn"
+                    onclick="closeModal('deleteIngredientModal{{ ingredient.id }}')">
+                ×
+            </button>
+        </div>
+
+        <form method="POST" action="{% url 'admin_panel:ingredient_delete' ingredient.id %}">
+            {% csrf_token %}
+
+            <div class="modal-body">
+                <p>
+                    Voulez-vous vraiment supprimer cet ingrédient ?
+                </p>
+
+                <h3 style="color:#8B4513; margin-bottom:8px;">
+                    {{ ingredient.name }}
+                </h3>
+
+                <p style="color:#666;">
+                    Stock actuel :
+                    <strong>{{ ingredient.quantity }} {{ ingredient.unit }}</strong>
+                </p>
+
+                <p style="color:#666;">
+                    Prix unitaire :
+                    <strong>{{ ingredient.unit_price }} MAD</strong>
+                </p>
+
+                {% if ingredient.dish_usages.exists %}
+                    <div style="background:#FFF3E0; color:#EF6C00; padding:15px; border-radius:10px; margin-top:18px;">
+                        <strong>Attention :</strong>
+                        Cet ingrédient est utilisé dans un ou plusieurs plats.
+                        La suppression peut être bloquée. Il est préférable de le garder ou de le remplacer dans les compositions.
+                    </div>
+                {% else %}
+                    <div style="background:#FFEBEE; color:#C62828; padding:15px; border-radius:10px; margin-top:18px;">
+                        Cette action est définitive.
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn-cancel"
+                        onclick="closeModal('deleteIngredientModal{{ ingredient.id }}')">
+                    Annuler
+                </button>
+
+                <button type="submit" class="btn-confirm-delete">
+                    Supprimer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,171 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Entretien | L'Héritage Gourmand{% endblock %}
+
+{% block extra_css %}
+<style>
+    .task-container{
+        max-width:700px;
+        margin:0 auto;
+    }
+
+    .task-form{
+        margin:0 0 18px 0;
+    }
+
+    .task-card{
+        width:100%;
+        background:white;
+        border:none;
+        border-radius:16px;
+        padding:22px;
+        display:grid;
+        grid-template-columns:42px 1fr 20px;
+        align-items:center;
+        gap:18px;
+        box-shadow:0 8px 24px rgba(0,0,0,.07);
+        cursor:pointer;
+        text-align:left;
+        transition:.25s ease;
+    }
+
+    .task-card:hover{
+        transform:translateY(-2px);
+        box-shadow:0 12px 28px rgba(0,0,0,.10);
+    }
+
+    .task-check{
+        width:38px;
+        height:38px;
+        border:2px solid #8B4513;
+        border-radius:50%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:#8B4513;
+        background:white;
+        font-size:1rem;
+        flex-shrink:0;
+    }
+
+    .task-info{
+        display:flex;
+        flex-direction:column;
+        gap:6px;
+    }
+
+    .task-zone{
+        font-size:.72rem;
+        text-transform:uppercase;
+        letter-spacing:1.5px;
+        color:#8B4513;
+        font-weight:900;
+    }
+
+    .task-name{
+        display:block;
+        font-weight:800;
+        font-size:1.15rem;
+        color:#111;
+    }
+
+    .task-time{
+        display:block;
+        font-size:.88rem;
+        color:#777;
+    }
+
+    .empty{
+        background:white;
+        border-radius:16px;
+        padding:40px;
+        text-align:center;
+        color:#777;
+        box-shadow:0 8px 24px rgba(0,0,0,.06);
+    }
+
+    .empty i{
+        font-size:2.4rem;
+        margin-bottom:14px;
+        color:#8B4513;
+    }
+
+    @media(max-width:700px){
+        .task-card{
+            grid-template-columns:38px 1fr;
+        }
+
+        .task-card i.fa-chevron-right{
+            display:none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="task-container">
+
+    <div style="text-align:center;margin-bottom:40px;">
+        <h1 style="font-family:serif;margin-bottom:8px;">
+            Planning d'Entretien
+        </h1>
+
+        <p style="color:#777;">
+            {{ now|date:"l d F Y" }}
+        </p>
+    </div>
+
+    {% for task in tasks %}
+        <form method="post"
+              action="{% url 'staffops:task_done' task.id %}"
+              class="task-form">
+            {% csrf_token %}
+
+            <button type="submit" class="task-card">
+
+                <span class="task-check">
+                    <i class="fas fa-check"></i>
+                </span>
+
+                <span class="task-info">
+
+                    <span class="task-zone">
+                        {{ task.zone }}
+                    </span>
+
+                    <span class="task-name">
+                        {{ task.title }}
+                    </span>
+
+                    <span class="task-time">
+                        Assigné à {{ task.scheduled_at|date:"H:i" }}
+
+                        {% if task.employee %}
+                            • {{ task.employee.get_full_name|default:task.employee.username }}
+                        {% endif %}
+                    </span>
+
+                </span>
+
+                <i class="fas fa-chevron-right" style="color:#DDD;"></i>
+
+            </button>
+        </form>
+
+    {% empty %}
+
+        <div class="empty">
+            <i class="fas fa-check-circle"></i>
+
+            <h3 style="margin-bottom:8px;">
+                Tout est propre
+            </h3>
+
+            <p>
+                Aucune tâche de nettoyage pour le moment.
+            </p>
+        </div>
+
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,363 @@
+{% extends "admin_panel/base.html" %}
+
+{% block title %}Gestion des Commandes{% endblock %}
+{% block page_title %}Gestion des Commandes{% endblock %}
+
+{% block extra_css %}
+.status-pending { background:#FFF3E0; color:#EF6C00; }
+.status-preparing { background:#E3F2FD; color:#1976D2; }
+.status-ready { background:#F3E5F5; color:#7B1FA2; }
+.status-served { background:#E8F5E9; color:#2E7D32; }
+.status-paid { background:#E8F5E9; color:#1B5E20; }
+.status-cancelled { background:#FFEBEE; color:#C62828; }
+
+.action-btn {
+    border:none;
+    padding:8px 11px;
+    border-radius:8px;
+    cursor:pointer;
+    margin:2px;
+}
+
+.btn-main { background:#8B4513; color:white; }
+.btn-light { background:#EEE; color:#333; }
+.btn-danger { background:#C62828; color:white; }
+.btn-info { background:#1976D2; color:white; }
+
+.form-control {
+    padding:10px 12px;
+    border:1px solid #DDD;
+    border-radius:8px;
+}
+
+.orders-filters {
+    display:grid;
+    grid-template-columns: minmax(260px, 1.8fr) minmax(180px, 1fr) minmax(180px, 1fr) auto auto;
+    gap:10px;
+    margin-bottom:20px;
+    align-items:center;
+}
+
+.orders-filters .action-btn {
+    margin:0;
+    height:44px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    white-space:nowrap;
+}
+
+@media (max-width: 1100px) {
+    .orders-filters {
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .orders-filters {
+        grid-template-columns: 1fr;
+    }
+}
+
+.modal {
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:3000;
+    background:rgba(0,0,0,.45);
+    align-items:center;
+    justify-content:center;
+}
+
+.modal.active { display:flex; }
+
+.modal-content {
+    background:white;
+    width:min(850px, 95%);
+    max-height:90vh;
+    overflow-y:auto;
+    border-radius:16px;
+    padding:25px;
+}
+
+.order-items-table {
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+.order-items-table th,
+.order-items-table td {
+    padding:12px;
+    border-bottom:1px solid #EEE;
+}
+{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="card-header">
+        <h2>Liste des Commandes</h2>
+    </div>
+
+    <form method="GET" class="orders-filters">
+        <input
+            type="text"
+            name="q"
+            value="{{ request.GET.q }}"
+            placeholder="Rechercher client..."
+            class="form-control"
+        >
+
+        <select name="status" class="form-control">
+            <option value="">Tous les statuts</option>
+            {% for value,label in statuses %}
+                <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <select name="mode" class="form-control">
+            <option value="">Tous les modes</option>
+            {% for value,label in modes %}
+                <option value="{{ value }}" {% if selected_mode == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <button class="action-btn btn-main">
+            <i class="fas fa-filter"></i> Filtrer
+        </button>
+
+        <a href="{% url 'admin_panel:orders' %}" class="action-btn btn-light" style="text-decoration:none;">
+            Réinitialiser
+        </a>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Client</th>
+                <th>Table</th>
+                <th>Date</th>
+                <th>Mode</th>
+                <th>Total</th>
+                <th>Statut</th>
+                <th>Articles</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td><strong>#ORD-{{ order.id }}</strong></td>
+
+                <td>
+                    {% if order.user %}
+                        {{ order.user.get_full_name|default:order.user.username }}
+                    {% else %}
+                        Client invité
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if order.table %}
+                        Table {{ order.table.number }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+
+                <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
+
+                <td>{{ order.get_mode_display }}</td>
+
+                <td><strong>{{ order.total }} MAD</strong></td>
+
+                <td>
+                    <span class="status-badge status-{{ order.status|lower }}">
+                        {{ order.get_status_display }}
+                    </span>
+                </td>
+
+                <td>{{ order.items.count }}</td>
+
+                <td>
+                    <div class="act-dd">
+                        <button type="button" class="act-dd-btn">
+                            Actions <i class="fas fa-chevron-down act-chev"></i>
+                        </button>
+                        <div class="act-dd-menu">
+                            <button type="button" class="act-dd-item" onclick="openModal('viewOrder{{ order.id }}')">
+                                <i class="fas fa-eye"></i> Voir
+                            </button>
+                            <button type="button" class="act-dd-item" onclick="openModal('statusOrder{{ order.id }}')">
+                                <i class="fas fa-edit"></i> Modifier statut
+                            </button>
+                            <div class="act-dd-sep"></div>
+                            <button type="button" class="act-dd-item dd-danger" onclick="openModal('deleteOrder{{ order.id }}')">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </button>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" style="text-align:center; padding:30px; color:#888;">
+                    Aucune commande trouvée.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% for order in orders %}
+<div class="modal" id="viewOrder{{ order.id }}">
+    <div class="modal-content">
+        <h2>Détails commande #ORD-{{ order.id }}</h2>
+
+        <p><strong>Client :</strong>
+            {% if order.user %}
+                {{ order.user.get_full_name|default:order.user.username }}
+            {% else %}
+                Client invité
+            {% endif %}
+        </p>
+
+        <p><strong>Date :</strong> {{ order.created_at|date:"d/m/Y H:i" }}</p>
+
+        <p><strong>Mode :</strong> {{ order.get_mode_display }}</p>
+
+        <p><strong>Table :</strong>
+            {% if order.table %}
+                Table {{ order.table.number }} - {{ order.table.get_zone_display }}
+            {% else %}
+                -
+            {% endif %}
+        </p>
+
+        <p>
+            <strong>Statut :</strong>
+            <span class="status-badge status-{{ order.status }}">
+                {{ order.get_status_display }}
+            </span>
+        </p>
+
+        <table class="order-items-table">
+            <thead>
+                <tr>
+                    <th>Plat</th>
+                    <th>Quantité</th>
+                    <th>Prix</th>
+                    <th>Sous-total</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in order.items.all %}
+                <tr>
+                    <td>{{ item.display_name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.unit_price }} MAD</td>
+                    <td>{{ item.subtotal }} MAD</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">Aucun article.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h3 style="text-align:right; color:#8B4513;">
+            Total : {{ order.total }} MAD
+        </h3>
+
+        <div style="text-align:right;">
+            <button class="action-btn btn-light" onclick="closeModal('viewOrder{{ order.id }}')">
+                Fermer
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="statusOrder{{ order.id }}">
+    <div class="modal-content">
+        <h2>Modifier statut commande #ORD-{{ order.id }}</h2>
+
+        <form method="post" action="{% url 'admin_panel:order_update_status' order.id %}">
+            {% csrf_token %}
+
+            <div style="margin-bottom:20px;">
+                <label><strong>Statut</strong></label>
+                <select name="status" class="form-control" style="width:100%; margin-top:8px;">
+                    {% for value,label in statuses %}
+                        <option value="{{ value }}" {% if order.status == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="text-align:right;">
+                <button type="button" class="action-btn btn-light" onclick="closeModal('statusOrder{{ order.id }}')">
+                    Annuler
+                </button>
+
+                <button class="action-btn btn-main">
+                    Modifier
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal" id="deleteOrder{{ order.id }}">
+    <div class="modal-content">
+        <h2>Supprimer commande</h2>
+
+        <p>
+            Voulez-vous vraiment supprimer la commande
+            <strong>#ORD-{{ order.id }}</strong> ?
+        </p>
+
+        <form method="post" action="{% url 'admin_panel:order_delete' order.id %}">
+            {% csrf_token %}
+
+            <div style="text-align:right;">
+                <button type="button" class="action-btn btn-light" onclick="closeModal('deleteOrder{{ order.id }}')">
+                    Annuler
+                </button>
+
+                <button class="action-btn btn-danger">
+                    Supprimer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+function openModal(id) {
+    document.getElementById(id).classList.add("active");
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove("active");
+}
+
+window.addEventListener("click", function(e) {
+    document.querySelectorAll(".modal.active").forEach(function(modal) {
+        if (e.target === modal) {
+            modal.classList.remove("active");
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Livraison | L'Héritage Gourmand{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delivery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px;
+    }
+
+    .delivery-card {
+        background: white;
+        border-radius: 16px;
+        padding: 22px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+        border-top: 5px solid #8B4513;
+    }
+
+    .delivery-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .delivery-id {
+        font-weight: 800;
+        color: #8B4513;
+    }
+
+    .delivery-status {
+        font-size: 0.75rem;
+        font-weight: 800;
+        background: #FDF5E6;
+        color: #8B4513;
+        padding: 5px 10px;
+        border-radius: 999px;
+    }
+
+    .delivery-info {
+        display: grid;
+        gap: 10px;
+        margin: 15px 0;
+        color: #444;
+        font-size: 0.9rem;
+    }
+
+    .delivery-items {
+        border-top: 1px solid #eee;
+        border-bottom: 1px solid #eee;
+        padding: 12px 0;
+        margin: 15px 0;
+    }
+
+    .delivery-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+
+    .delivery-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .delivery-btn {
+        border: none;
+        border-radius: 10px;
+        padding: 12px;
+        font-weight: 800;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        color: white;
+    }
+
+    .btn-route {
+        background: #1976D2;
+    }
+
+    .btn-delivered {
+        background: #2E7D32;
+    }
+
+    .empty-state {
+        background: white;
+        border-radius: 16px;
+        padding: 35px;
+        text-align: center;
+        color: #777;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;">
+    <div>
+        <h1 style="margin:0;">Espace Livreur</h1>
+        <p style="color:#777;margin:6px 0 0;">Commandes prêtes à livrer et livraisons en cours</p>
+    </div>
+</div>
+
+<div class="delivery-grid">
+    {% for order in orders %}
+        <div class="delivery-card">
+            <div class="delivery-header">
+                <div class="delivery-id">#CMD-{{ order.id }}</div>
+                <div class="delivery-status">{{ order.get_status_display }}</div>
+            </div>
+
+            <div class="delivery-info">
+                <div>
+                    <i class="fas fa-user"></i>
+                    Client :
+                    <strong>
+                        {% if order.user %}
+                            {{ order.user.get_full_name|default:order.user.username }}
+                        {% else %}
+                            Client invité
+                        {% endif %}
+                    </strong>
+                </div>
+
+                <div>
+                    <i class="fas fa-phone"></i>
+                    Téléphone :
+                    <strong>{{ order.phone|default:"Non renseigné" }}</strong>
+                </div>
+
+                <div>
+                    <i class="fas fa-map-marker-alt"></i>
+                    Adresse :
+                    <strong>{{ order.address|default:"Adresse non renseignée" }}</strong>
+                </div>
+
+                <div>
+                    <i class="fas fa-clock"></i>
+                    Créée il y a {{ order.created_at|timesince }}
+                </div>
+            </div>
+
+            <div class="delivery-items">
+                {% for item in order.items.all %}
+                    <div class="delivery-item">
+                        <span>{{ item.quantity }} x {{ item.display_name }}</span>
+                        <strong>{{ item.subtotal }} MAD</strong>
+                    </div>
+                {% empty %}
+                    <p>Aucun article.</p>
+                {% endfor %}
+            </div>
+
+            <div style="display:flex;justify-content:space-between;font-weight:800;font-size:1.1rem;">
+                <span>Total</span>
+                <span>{{ order.total_price|default:order.total }} MAD</span>
+            </div>
+
+            <div class="delivery-actions">
+                <a href="{% url 'staffops:delivery_status' order.id 'OUT_FOR_DELIVERY' %}" class="delivery-btn btn-route">
+                    En route
+                </a>
+
+                <a href="{% url 'staffops:delivery_status' order.id 'DELIVERED' %}" class="delivery-btn btn-delivered">
+                    Livrée
+                </a>
+            </div>
+        </div>
+    {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-motorcycle" style="font-size:2rem;"></i>
+            <p>Aucune commande à livrer pour le moment.</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

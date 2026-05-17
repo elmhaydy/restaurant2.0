@@ -1,0 +1,376 @@
+{% load static %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion | L'Héritage Gourmand</title>
+
+    <link rel="icon" type="image/png" href="{% static 'img/herit.logo.png' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/variables.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            background: var(--cream);
+        }
+
+        /* ── Custom cursor ── */
+        .cursor-dot {
+            width: 8px; height: 8px; background: var(--gold);
+            border-radius: 50%; position: fixed; top: 0; left: 0;
+            pointer-events: none; z-index: 9999;
+            transform: translate(-50%, -50%);
+        }
+        .cursor-ring {
+            width: 36px; height: 36px; border: 1.5px solid var(--gold);
+            border-radius: 50%; position: fixed; top: 0; left: 0;
+            pointer-events: none; z-index: 9998;
+            transform: translate(-50%, -50%); opacity: 0.6;
+        }
+
+        /* ── Layout ── */
+        .auth-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 100vh;
+        }
+
+        /* ── Left panel (atmospheric) ── */
+        .auth-panel-left {
+            position: relative;
+            overflow: hidden;
+        }
+        .auth-panel-left-bg {
+            position: absolute; inset: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transform: scale(1.04);
+            will-change: transform;
+        }
+        .auth-panel-left-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(
+                160deg,
+                rgba(13,11,8,0.75) 0%,
+                rgba(13,11,8,0.55) 50%,
+                rgba(13,11,8,0.80) 100%
+            );
+        }
+        .auth-panel-left-content {
+            position: relative; z-index: 2;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px 48px;
+        }
+        .auth-logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        .auth-logo-img {
+            height: 48px;
+            width: auto;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+        }
+        .auth-panel-quote {
+            padding-bottom: 20px;
+        }
+        .auth-quote-mark {
+            font-family: var(--font-display);
+            font-size: 5rem;
+            color: var(--gold);
+            opacity: 0.6;
+            line-height: 0.8;
+            display: block;
+            margin-bottom: 20px;
+        }
+        .auth-quote-text {
+            font-family: var(--font-display);
+            font-size: 1.7rem;
+            font-weight: 300;
+            font-style: italic;
+            color: var(--white);
+            line-height: 1.35;
+            margin-bottom: 16px;
+        }
+        .auth-quote-author {
+            font-size: 0.72rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--gold-light);
+            font-weight: 600;
+        }
+
+        /* ── Right panel (form) ── */
+        .auth-panel-right {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px 64px;
+            background: var(--cream);
+            position: relative;
+        }
+        .auth-back {
+            position: absolute;
+            top: 32px; left: 36px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: var(--warm-muted);
+            text-decoration: none;
+            transition: color 0.25s;
+        }
+        .auth-back:hover { color: var(--charcoal); }
+
+        .auth-form-header { margin-bottom: 40px; }
+        .auth-form-eyebrow {
+            font-size: 0.68rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--gold);
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: block;
+        }
+        .auth-form-title {
+            font-family: var(--font-display);
+            font-size: 2.4rem;
+            font-weight: 300;
+            font-style: italic;
+            color: var(--charcoal);
+            line-height: 1.1;
+        }
+        .auth-form-title strong { font-style: normal; font-weight: 700; }
+
+        /* Form controls */
+        .form-group { margin-bottom: 20px; }
+        .form-label {
+            display: block;
+            font-size: 0.7rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: var(--charcoal);
+            margin-bottom: 8px;
+        }
+        .auth-panel-right input[type="text"],
+        .auth-panel-right input[type="password"],
+        .auth-panel-right input[type="email"] {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--white);
+            border: 1.5px solid var(--cream-border);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            color: var(--charcoal);
+            transition: border-color 0.25s, box-shadow 0.25s;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .auth-panel-right input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(201,146,42,0.12);
+        }
+
+        .form-row-split {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 28px;
+        }
+        .forgot-link {
+            font-size: 0.78rem;
+            color: var(--warm-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .forgot-link:hover { color: var(--gold); }
+
+        .error-alert {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #FFF0F0;
+            border: 1px solid #FFCDD2;
+            color: var(--danger);
+            padding: 13px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .auth-submit {
+            width: 100%;
+            padding: 16px;
+            background: var(--charcoal);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .auth-submit:hover {
+            background: var(--gold);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(201,146,42,0.3);
+        }
+
+        .auth-footer-text {
+            text-align: center;
+            margin-top: 28px;
+            font-size: 0.85rem;
+            color: var(--warm-muted);
+        }
+        .auth-footer-text a {
+            color: var(--gold);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .auth-footer-text a:hover { text-decoration: underline; }
+
+        @media (max-width: 900px) {
+            .auth-wrap { grid-template-columns: 1fr; }
+            .auth-panel-left { display: none; }
+            .auth-panel-right { padding: 80px 32px; }
+            .auth-back { top: 24px; left: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<div class="auth-wrap">
+
+    <!-- Left: Atmospheric panel -->
+    <div class="auth-panel-left">
+        <div class="auth-panel-left-bg" id="authBg" style="background-image: url('{% static 'img/login.png' %}');"></div>
+        <div class="auth-panel-left-overlay"></div>
+        <div class="auth-panel-left-content">
+            <a href="{% url 'home' %}" class="auth-logo">
+                <img src="{% static 'img/herit.logo.png' %}" alt="L'Héritage" class="auth-logo-img">
+            </a>
+            <div class="auth-panel-quote">
+                <span class="auth-quote-mark">"</span>
+                <p class="auth-quote-text">
+                    La gastronomie est l'art de faire durer le plaisir de manger.
+                </p>
+                <span class="auth-quote-author">— L'Héritage Gourmand</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Form -->
+    <div class="auth-panel-right" id="authRight">
+        <a href="{% url 'home' %}" class="auth-back">
+            <i class="fas fa-arrow-left"></i>
+            Accueil
+        </a>
+
+        <div class="auth-form-header">
+            <span class="auth-form-eyebrow">Espace Client</span>
+            <h1 class="auth-form-title">
+                Bon<br><strong>Retour</strong>
+            </h1>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            {% if form.errors %}
+                <div class="error-alert">
+                    <i class="fas fa-exclamation-circle"></i>
+                    Identifiants incorrects. Veuillez réessayer.
+                </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label class="form-label">Identifiant ou Email</label>
+                {{ form.username }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mot de passe</label>
+                {{ form.password }}
+            </div>
+
+            <div class="form-row-split">
+                <a href="#" class="forgot-link">Mot de passe oublié ?</a>
+            </div>
+
+            <button type="submit" class="auth-submit">
+                <i class="fas fa-sign-in-alt"></i>
+                Se Connecter
+            </button>
+        </form>
+
+        <div class="auth-footer-text">
+            Pas encore de compte ?
+            <a href="{% url 'accounts:signup_client' %}">Créer un compte gratuit →</a>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+    /* Custom cursor */
+    const dot  = document.getElementById('cursorDot');
+    const ring = document.getElementById('cursorRing');
+    document.addEventListener('mousemove', e => {
+        gsap.set(dot,  { x: e.clientX, y: e.clientY });
+        gsap.to(ring,  { x: e.clientX, y: e.clientY, duration: 0.2, ease: 'power2.out' });
+    });
+
+    /* Entrance */
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    tl.from('#authBg',    { scale: 1.1, duration: 1.6 })
+      .from('.auth-panel-left-content > *', { y: 30, opacity: 0, duration: 0.9, stagger: 0.2 }, '-=0.8')
+      .from('#authRight > *', { y: 24, opacity: 0, duration: 0.7, stagger: 0.08 }, '-=1');
+
+    /* Style Django form fields */
+    document.querySelectorAll('#id_username, #id_password').forEach(el => {
+        el.style.width      = '100%';
+        el.style.padding    = '14px 16px';
+        el.style.background = '#fff';
+        el.style.border     = '1.5px solid #E2D5BC';
+        el.style.borderRadius = '4px';
+        el.style.fontFamily = "'Inter', sans-serif";
+        el.style.fontSize   = '0.9rem';
+        el.style.color      = '#1C1310';
+        el.style.outline    = 'none';
+        el.style.boxSizing  = 'border-box';
+        el.addEventListener('focus', () => {
+            el.style.borderColor = '#C9922A';
+            el.style.boxShadow   = '0 0 0 3px rgba(201,146,42,0.12)';
+        });
+        el.addEventListener('blur', () => {
+            el.style.borderColor = '#E2D5BC';
+            el.style.boxShadow   = 'none';
+        });
+    });
+</script>
+</body>
+</html>

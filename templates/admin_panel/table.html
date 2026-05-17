@@ -1,0 +1,902 @@
+{% extends "admin_panel/base.html" %}
+{% load static %}
+
+{% block content %}
+
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 18px;
+        margin-bottom: 25px;
+    }
+
+    .stat-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .stat-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stat-info small {
+        color: #888;
+        font-weight: 600;
+    }
+
+    .stat-info strong {
+        display: block;
+        font-size: 1.4rem;
+        color: #2C2C2C;
+    }
+
+    .content-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        margin-bottom: 25px;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 22px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+    }
+
+    .card-header h2 {
+        font-family: 'Playfair Display', serif;
+        margin: 0;
+        color: #2C2C2C;
+    }
+
+    .btn-primary-custom {
+        background: #8B4513;
+        color: #fff;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .btn-light-custom {
+        background: #f2f2f2;
+        color: #333;
+        border: none;
+        padding: 9px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .filters {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .form-control {
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        width: 100%;
+    }
+
+    .restaurant-map {
+        position: relative;
+        min-height: 520px;
+        background:
+            linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px),
+            linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px);
+        background-size: 35px 35px;
+        border: 2px dashed #ddd;
+        border-radius: 18px;
+        overflow: hidden;
+    }
+
+    .zone-region {
+        position: absolute;
+        border: 1px dashed rgba(139, 69, 19, 0.12);
+        background: rgba(139, 69, 19, 0.03);
+        border-radius: 16px;
+        pointer-events: none;
+    }
+
+    .zone-title {
+        position: absolute;
+        font-weight: 800;
+        color: rgba(0,0,0,0.15);
+        font-size: 2rem;
+        pointer-events: none;
+    }
+
+    .table-node {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        width: 92px;
+        height: 92px;
+        border-radius: 50%;
+        background: #fff;
+        border: 4px solid #ddd;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: grab;
+        box-shadow: 0 8px 22px rgba(0,0,0,0.12);
+        transition: all .25s ease;
+        text-align: center;
+        user-select: none;
+        touch-action: none;
+        z-index: 2;
+    }
+
+    .table-node:hover {
+        transform: translate(-50%, -50%) scale(1.06);
+    }
+
+    .table-node.dragging {
+        cursor: grabbing;
+        transition: none;
+        transform: translate(-50%, -50%) scale(1.08);
+        box-shadow: 0 12px 26px rgba(0,0,0,0.18);
+        z-index: 5;
+    }
+
+    .table-node strong {
+        font-size: .9rem;
+        color: #222;
+    }
+
+    .table-node small {
+        font-size: .7rem;
+        color: #777;
+    }
+
+    .table-available {
+        border-color: #2E7D32;
+    }
+
+    .table-reserved {
+        border-color: #EF6C00;
+    }
+
+    .table-occupied {
+        border-color: #C62828;
+    }
+
+    .table-needs_cleaning {
+        border-color: #1976D2;
+    }
+
+    .table-out_of_service {
+        border-color: #777;
+        opacity: .55;
+    }
+
+    .badge {
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-size: .72rem;
+        font-weight: 800;
+        display: inline-block;
+    }
+
+    .badge-available { background:#E8F5E9; color:#2E7D32; }
+    .badge-reserved { background:#FFF3E0; color:#EF6C00; }
+    .badge-occupied { background:#FFEBEE; color:#C62828; }
+    .badge-needs_cleaning { background:#E3F2FD; color:#1976D2; }
+    .badge-out_of_service { background:#eee; color:#555; }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        text-align: left;
+        padding: 12px;
+        color: #777;
+        border-bottom: 2px solid #f4f4f4;
+        font-size: .85rem;
+    }
+
+    .sort-link {
+        color: inherit;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 800;
+    }
+
+    .sort-link:hover {
+        color: #8B4513;
+    }
+
+    .sort-indicator {
+        font-size: .72rem;
+        color: #8B4513;
+    }
+
+    td {
+        padding: 12px;
+        border-bottom: 1px solid #f4f4f4;
+        font-size: .9rem;
+    }
+
+    .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .icon-btn {
+        border: none;
+        background: #f5f5f5;
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        inset: 0;
+        background: rgba(0,0,0,.45);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: #fff;
+        width: min(760px, 95%);
+        max-height: 92vh;
+        overflow-y: auto;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 15px 50px rgba(0,0,0,.25);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 14px;
+        margin-bottom: 20px;
+    }
+
+    .modal-header h3 {
+        font-family: 'Playfair Display', serif;
+        margin: 0;
+    }
+
+    .close-modal {
+        border: none;
+        background: #f2f2f2;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 16px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 7px;
+        font-weight: 700;
+        font-size: .85rem;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 22px;
+    }
+
+    .map-help {
+        color: #777;
+        font-size: .9rem;
+        margin-bottom: 16px;
+    }
+</style>
+
+<h1 style="font-family:'Playfair Display', serif; margin-bottom:25px;">
+    Gestion des Tables
+</h1>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="content-card" style="padding:14px; color:#2E7D32;">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#E3F2FD; color:#1976D2;">
+            <i class="fas fa-chair"></i>
+        </div>
+        <div class="stat-info">
+            <small>Total tables</small>
+            <strong>{{ total_tables }}</strong>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#E8F5E9; color:#2E7D32;">
+            <i class="fas fa-check"></i>
+        </div>
+        <div class="stat-info">
+            <small>Disponibles</small>
+            <strong>{{ available_count }}</strong>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#FFEBEE; color:#C62828;">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+            <small>Occupées</small>
+            <strong>{{ occupied_count }}</strong>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#FFF3E0; color:#EF6C00;">
+            <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-info">
+            <small>Réservées</small>
+            <strong>{{ reserved_count }}</strong>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#E3F2FD; color:#1976D2;">
+            <i class="fas fa-broom"></i>
+        </div>
+        <div class="stat-info">
+            <small>À nettoyer</small>
+            <strong>{{ cleaning_count }}</strong>
+        </div>
+    </div>
+</div>
+
+<div class="content-card">
+    <div class="card-header">
+        <h2>Plan du restaurant</h2>
+        <button class="btn-primary-custom" onclick="openModal('createModal')">
+            <i class="fas fa-plus"></i> Ajouter une table
+        </button>
+    </div>
+
+    <form method="get" class="filters">
+        <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Rechercher une table..." class="form-control" style="max-width:230px;">
+
+        <select name="zone" class="form-control" style="max-width:200px;">
+            <option value="">Toutes les zones</option>
+            {% for value,label in zones %}
+                <option value="{{ value }}" {% if selected_zone == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="status" class="form-control" style="max-width:220px;">
+            <option value="">Tous les statuts</option>
+            {% for value,label in statuses %}
+                <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+
+        <button class="btn-primary-custom" type="submit">
+            <i class="fas fa-filter"></i> Filtrer
+        </button>
+
+        <a href="{% url 'admin_panel:tables' %}" class="btn-light-custom">
+            Réinitialiser
+        </a>
+    </form>
+
+    <div class="map-help">
+        Glisse une table sur le plan. Sa zone changera automatiquement selon l'endroit ou tu la deposes.
+    </div>
+
+    <div class="restaurant-map" id="restaurantMap">
+        <div class="zone-region" style="left:2%; top:4%; width:66%; height:48%;"></div>
+        <div class="zone-region" style="left:71%; top:4%; width:26%; height:48%;"></div>
+        <div class="zone-region" style="left:2%; top:58%; width:40%; height:34%;"></div>
+        <div class="zone-region" style="left:46%; top:58%; width:27%; height:34%;"></div>
+        <div class="zone-region" style="left:77%; top:58%; width:20%; height:34%;"></div>
+        <div class="zone-title" style="top:20px; left:30px;">Intérieur</div>
+        <div class="zone-title" style="top:20px; right:40px;">VIP</div>
+        <div class="zone-title" style="bottom:20px; left:30px;">Terrasse</div>
+        <div class="zone-title" style="bottom:20px; left:50%; transform:translateX(-50%);">Famille</div>
+        <div class="zone-title" style="bottom:20px; right:40px;">Bar</div>
+
+        {% for table in tables %}
+            <div
+                class="table-node table-{{ table.status }}"
+                style="left:{{ table.pos_x }}%; top:{{ table.pos_y }}%;"
+                data-table-id="{{ table.id }}"
+                data-reposition-url="{% url 'admin_panel:table_reposition' table.id %}"
+                data-edit-modal="editModal{{ table.id }}"
+                title="{{ table.name }} - {{ table.get_status_display }}"
+            >
+                <strong>{{ table.name }}</strong>
+                <small>{{ table.capacity }} places</small>
+                <small>{{ table.get_zone_display }}</small>
+            </div>
+        {% empty %}
+            <div style="padding:40px; color:#777;">
+                Aucune table trouvée.
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="content-card">
+    <div class="card-header">
+        <h2>Liste des tables</h2>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>
+                    <a class="sort-link" href="?{% if q %}q={{ q|urlencode }}&amp;{% endif %}{% if selected_zone %}zone={{ selected_zone|urlencode }}&amp;{% endif %}{% if selected_status %}status={{ selected_status|urlencode }}&amp;{% endif %}sort=name&amp;dir={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                        Table
+                        {% if sort == "name" %}<span class="sort-indicator">{% if direction == "asc" %}▲{% else %}▼{% endif %}</span>{% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a class="sort-link" href="?{% if q %}q={{ q|urlencode }}&amp;{% endif %}{% if selected_zone %}zone={{ selected_zone|urlencode }}&amp;{% endif %}{% if selected_status %}status={{ selected_status|urlencode }}&amp;{% endif %}sort=number&amp;dir={% if sort == 'number' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                        Numéro
+                        {% if sort == "number" %}<span class="sort-indicator">{% if direction == "asc" %}▲{% else %}▼{% endif %}</span>{% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a class="sort-link" href="?{% if q %}q={{ q|urlencode }}&amp;{% endif %}{% if selected_zone %}zone={{ selected_zone|urlencode }}&amp;{% endif %}{% if selected_status %}status={{ selected_status|urlencode }}&amp;{% endif %}sort=zone&amp;dir={% if sort == 'zone' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                        Zone
+                        {% if sort == "zone" %}<span class="sort-indicator">{% if direction == "asc" %}▲{% else %}▼{% endif %}</span>{% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a class="sort-link" href="?{% if q %}q={{ q|urlencode }}&amp;{% endif %}{% if selected_zone %}zone={{ selected_zone|urlencode }}&amp;{% endif %}{% if selected_status %}status={{ selected_status|urlencode }}&amp;{% endif %}sort=capacity&amp;dir={% if sort == 'capacity' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                        Capacité
+                        {% if sort == "capacity" %}<span class="sort-indicator">{% if direction == "asc" %}▲{% else %}▼{% endif %}</span>{% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a class="sort-link" href="?{% if q %}q={{ q|urlencode }}&amp;{% endif %}{% if selected_zone %}zone={{ selected_zone|urlencode }}&amp;{% endif %}{% if selected_status %}status={{ selected_status|urlencode }}&amp;{% endif %}sort=status&amp;dir={% if sort == 'status' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                        Statut
+                        {% if sort == "status" %}<span class="sort-indicator">{% if direction == "asc" %}▲{% else %}▼{% endif %}</span>{% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a class="sort-link" href="?{% if q %}q={{ q|urlencode }}&amp;{% endif %}{% if selected_zone %}zone={{ selected_zone|urlencode }}&amp;{% endif %}{% if selected_status %}status={{ selected_status|urlencode }}&amp;{% endif %}sort=position&amp;dir={% if sort == 'position' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                        Position
+                        {% if sort == "position" %}<span class="sort-indicator">{% if direction == "asc" %}▲{% else %}▼{% endif %}</span>{% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a class="sort-link" href="?{% if q %}q={{ q|urlencode }}&amp;{% endif %}{% if selected_zone %}zone={{ selected_zone|urlencode }}&amp;{% endif %}{% if selected_status %}status={{ selected_status|urlencode }}&amp;{% endif %}sort=active&amp;dir={% if sort == 'active' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                        Active
+                        {% if sort == "active" %}<span class="sort-indicator">{% if direction == "asc" %}▲{% else %}▼{% endif %}</span>{% endif %}
+                    </a>
+                </th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for table in tables %}
+            <tr>
+                <td><strong>{{ table.name }}</strong></td>
+                <td>{{ table.number }}</td>
+                <td>{{ table.get_zone_display }}</td>
+                <td>{{ table.capacity }}</td>
+                <td>
+                    <span class="badge badge-{{ table.status }}">
+                        {{ table.get_status_display }}
+                    </span>
+                </td>
+                <td>X {{ table.pos_x }}% / Y {{ table.pos_y }}%</td>
+                <td>
+                    {% if table.is_active %}
+                        Oui
+                    {% else %}
+                        Non
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="actions">
+                        <button class="icon-btn" onclick="openModal('editModal{{ table.id }}')" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </button>
+
+                        <button class="icon-btn" onclick="openModal('statusModal{{ table.id }}')" title="Changer statut">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+
+                        <button class="icon-btn" onclick="openModal('deleteModal{{ table.id }}')" title="Désactiver">
+                            <i class="fas fa-trash" style="color:#C62828;"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" style="text-align:center; color:#777;">
+                    Aucune table enregistrée.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- MODAL CREATE -->
+<div class="modal" id="createModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Ajouter une table</h3>
+            <button class="close-modal" onclick="closeModal('createModal')">×</button>
+        </div>
+
+        <form method="post" action="{% url 'admin_panel:table_create' %}">
+            {% csrf_token %}
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nom</label>
+                    {{ form.name }}
+                </div>
+
+                <div class="form-group">
+                    <label>Numéro</label>
+                    {{ form.number }}
+                </div>
+
+                <div class="form-group">
+                    <label>Zone</label>
+                    {{ form.zone }}
+                </div>
+
+                <div class="form-group">
+                    <label>Capacité</label>
+                    {{ form.capacity }}
+                </div>
+
+                <div class="form-group">
+                    <label>Statut</label>
+                    {{ form.status }}
+                </div>
+
+                <div class="form-group">
+                    <label>Position X (%)</label>
+                    {{ form.pos_x }}
+                </div>
+
+                <div class="form-group">
+                    <label>Position Y (%)</label>
+                    {{ form.pos_y }}
+                </div>
+
+                <div class="form-group">
+                    <label>Active</label>
+                    {{ form.is_active }}
+                </div>
+
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label>Notes</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-light-custom" onclick="closeModal('createModal')">Annuler</button>
+                <button type="submit" class="btn-primary-custom">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% for table in tables %}
+<!-- MODAL EDIT -->
+<div class="modal" id="editModal{{ table.id }}">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Modifier {{ table.name }}</h3>
+            <button class="close-modal" onclick="closeModal('editModal{{ table.id }}')">×</button>
+        </div>
+
+        <form method="post" action="{% url 'admin_panel:table_update' table.id %}">
+            {% csrf_token %}
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nom</label>
+                    <input type="text" name="name" value="{{ table.name }}" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Numéro</label>
+                    <input type="number" name="number" value="{{ table.number }}" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Zone</label>
+                    <select name="zone" class="form-control">
+                        {% for value,label in zones %}
+                            <option value="{{ value }}" {% if table.zone == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Capacité</label>
+                    <input type="number" name="capacity" value="{{ table.capacity }}" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Statut</label>
+                    <select name="status" class="form-control">
+                        {% for value,label in statuses %}
+                            <option value="{{ value }}" {% if table.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Position X (%)</label>
+                    <input type="number" name="pos_x" value="{{ table.pos_x }}" min="0" max="100" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>Position Y (%)</label>
+                    <input type="number" name="pos_y" value="{{ table.pos_y }}" min="0" max="100" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="is_active" {% if table.is_active %}checked{% endif %}>
+                        Active
+                    </label>
+                </div>
+
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label>Notes</label>
+                    <textarea name="notes" rows="3" class="form-control">{{ table.notes }}</textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-light-custom" onclick="closeModal('editModal{{ table.id }}')">Annuler</button>
+                <button type="submit" class="btn-primary-custom">Modifier</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL STATUS -->
+<div class="modal" id="statusModal{{ table.id }}">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Changer le statut - {{ table.name }}</h3>
+            <button class="close-modal" onclick="closeModal('statusModal{{ table.id }}')">×</button>
+        </div>
+
+        <form method="post" action="{% url 'admin_panel:table_change_status' table.id %}">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>Nouveau statut</label>
+                <select name="status" class="form-control">
+                    {% for value,label in statuses %}
+                        <option value="{{ value }}" {% if table.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-light-custom" onclick="closeModal('statusModal{{ table.id }}')">Annuler</button>
+                <button type="submit" class="btn-primary-custom">Mettre à jour</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL DELETE -->
+<div class="modal" id="deleteModal{{ table.id }}">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Désactiver {{ table.name }}</h3>
+            <button class="close-modal" onclick="closeModal('deleteModal{{ table.id }}')">×</button>
+        </div>
+
+        <p>
+            Voulez-vous vraiment désactiver cette table ?
+            Elle ne sera plus utilisée pour les réservations et commandes.
+        </p>
+
+        <form method="post" action="{% url 'admin_panel:table_delete' table.id %}">
+            {% csrf_token %}
+
+            <div class="modal-footer">
+                <button type="button" class="btn-light-custom" onclick="closeModal('deleteModal{{ table.id }}')">Annuler</button>
+                <button type="submit" class="btn-primary-custom" style="background:#C62828;">
+                    Désactiver
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+    let draggedTable = null;
+    let dragMoved = false;
+    let dragPointerId = null;
+
+    function openModal(id) {
+        document.getElementById(id).classList.add('active');
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+    }
+
+    function getCsrfToken() {
+        const match = document.cookie.match(/csrftoken=([^;]+)/);
+        return match ? decodeURIComponent(match[1]) : '';
+    }
+
+    function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
+
+    function positionTableNode(tableNode, clientX, clientY) {
+        const map = document.getElementById('restaurantMap');
+        const rect = map.getBoundingClientRect();
+        const posX = clamp(((clientX - rect.left) / rect.width) * 100, 0, 100);
+        const posY = clamp(((clientY - rect.top) / rect.height) * 100, 0, 100);
+
+        tableNode.style.left = `${posX}%`;
+        tableNode.style.top = `${posY}%`;
+
+        return { posX, posY };
+    }
+
+    async function saveTablePosition(tableNode, posX, posY) {
+        const body = new URLSearchParams({
+            pos_x: posX.toFixed(2),
+            pos_y: posY.toFixed(2),
+        });
+
+        const response = await fetch(tableNode.dataset.repositionUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body,
+        });
+
+        if (!response.ok) {
+            throw new Error('Save failed');
+        }
+
+        return response.json();
+    }
+
+    document.querySelectorAll('.table-node').forEach((tableNode) => {
+        tableNode.addEventListener('click', (event) => {
+            if (dragMoved) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                dragMoved = false;
+                return;
+            }
+
+            openModal(tableNode.dataset.editModal);
+        });
+
+        tableNode.addEventListener('pointerdown', (event) => {
+            dragMoved = false;
+            dragPointerId = event.pointerId;
+            draggedTable = tableNode;
+            tableNode.classList.add('dragging');
+            tableNode.setPointerCapture(event.pointerId);
+        });
+
+        tableNode.addEventListener('pointermove', (event) => {
+            if (!draggedTable || draggedTable !== tableNode || event.pointerId !== dragPointerId) {
+                return;
+            }
+
+            dragMoved = true;
+            positionTableNode(tableNode, event.clientX, event.clientY);
+        });
+
+        tableNode.addEventListener('pointerup', async (event) => {
+            if (!draggedTable || draggedTable !== tableNode || event.pointerId !== dragPointerId) {
+                return;
+            }
+
+            const { posX, posY } = positionTableNode(tableNode, event.clientX, event.clientY);
+            tableNode.classList.remove('dragging');
+            draggedTable = null;
+            dragPointerId = null;
+
+            if (!dragMoved) {
+                openModal(`editModal${tableNode.dataset.tableId}`);
+                return;
+            }
+
+            try {
+                const data = await saveTablePosition(tableNode, posX, posY);
+                tableNode.style.left = `${data.pos_x}%`;
+                tableNode.style.top = `${data.pos_y}%`;
+
+                const zoneLabelNode = tableNode.querySelectorAll('small')[1];
+                if (zoneLabelNode && data.zone_label) {
+                    zoneLabelNode.textContent = data.zone_label;
+                }
+            } catch (error) {
+                window.location.reload();
+            }
+        });
+
+        tableNode.addEventListener('pointercancel', () => {
+            if (draggedTable === tableNode) {
+                tableNode.classList.remove('dragging');
+                draggedTable = null;
+                dragPointerId = null;
+                window.location.reload();
+            }
+        });
+    });
+
+    window.addEventListener('click', function(e) {
+        document.querySelectorAll('.modal.active').forEach(function(modal) {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+    });
+</script>
+
+{% endblock %}

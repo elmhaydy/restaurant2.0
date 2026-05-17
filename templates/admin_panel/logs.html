@@ -1,0 +1,91 @@
+{% extends "admin_panel/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="content-card">
+    <div class="card-header">
+        <h3 style="font-family: var(--font-serif);">
+            <i class="fas fa-history"></i> Journal d'Activité
+        </h3>
+    </div>
+
+    <form method="get" style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+        <input 
+            type="text" 
+            name="q" 
+            value="{{ search|default:'' }}" 
+            placeholder="Rechercher une action..."
+            style="padding:8px 12px; border:1px solid #DDD; border-radius:6px;"
+        >
+
+        <select name="type" style="padding:8px 12px; border:1px solid #DDD; border-radius:6px;">
+            <option value="">Tous les types</option>
+            <option value="create" {% if selected_type == "create" %}selected{% endif %}>Création</option>
+            <option value="update" {% if selected_type == "update" %}selected{% endif %}>Modification</option>
+            <option value="delete" {% if selected_type == "delete" %}selected{% endif %}>Suppression</option>
+            <option value="order" {% if selected_type == "order" %}selected{% endif %}>Commande</option>
+            <option value="reservation" {% if selected_type == "reservation" %}selected{% endif %}>Réservation</option>
+            <option value="payment" {% if selected_type == "payment" %}selected{% endif %}>Paiement</option>
+            <option value="kitchen" {% if selected_type == "kitchen" %}selected{% endif %}>Cuisine</option>
+            <option value="cleaning" {% if selected_type == "cleaning" %}selected{% endif %}>Nettoyage</option>
+        </select>
+
+        <input 
+            type="text" 
+            name="module" 
+            value="{{ selected_module|default:'' }}" 
+            placeholder="Module..."
+            style="padding:8px 12px; border:1px solid #DDD; border-radius:6px;"
+        >
+
+        <button class="btn btn-primary btn-sm" type="submit">
+            <i class="fas fa-filter"></i> Filtrer
+        </button>
+
+        <a href="{% url 'admin_panel:logs' %}" class="btn btn-sm" style="background:#EEE;">
+            Réinitialiser
+        </a>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Utilisateur</th>
+                <th>Module</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>IP</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.created_at|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {% if log.user %}
+                        <strong>{{ log.user.get_full_name|default:log.user.username }}</strong>
+                    {% else %}
+                        Système
+                    {% endif %}
+                </td>
+                <td>{{ log.module }}</td>
+                <td>
+                    <span class="status-badge status-pending">
+                        {{ log.get_action_type_display }}
+                    </span>
+                </td>
+                <td>{{ log.description }}</td>
+                <td>{{ log.ip_address|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align:center; color:#777;">
+                    Aucun log trouvé.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Service en Salle | L'Héritage{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tables-grid {
+        display:grid;
+        grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+        gap:18px;
+    }
+
+    .table-card {
+        background:white;
+        border-radius:16px;
+        padding:20px;
+        text-align:center;
+        text-decoration:none;
+        color:#222;
+        box-shadow:0 6px 18px rgba(0,0,0,.06);
+        border:3px solid #eee;
+        transition:.2s;
+    }
+
+    .table-card:hover {
+        transform:translateY(-3px);
+    }
+
+    .table-card.AVAILABLE { border-color:#C8E6C9; }
+    .table-card.RESERVED { border-color:#D4AF37; }
+    .table-card.OCCUPIED { border-color:#8B4513; }
+    .table-card.NEEDS_CLEANING { border-color:#1976D2; }
+    .table-card.OUT_OF_SERVICE { border-color:#C62828; }
+
+    .table-number {
+        font-size:1.8rem;
+        font-weight:900;
+        margin-bottom:8px;
+    }
+
+    .table-status {
+        font-size:.75rem;
+        text-transform:uppercase;
+        font-weight:800;
+        color:#666;
+    }
+
+    .order-badge {
+        margin-top:10px;
+        display:inline-block;
+        background:#FDF5E6;
+        color:#8B4513;
+        padding:5px 10px;
+        border-radius:999px;
+        font-size:.75rem;
+        font-weight:800;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="tables-grid">
+    {% for table in tables %}
+        <a href="{% url 'staffops:serveur_table_detail' table.id %}"
+           class="table-card {{ table.status }}">
+
+            <div class="table-number">
+                Table {{ table.number }}
+            </div>
+
+            <div class="table-status">
+                {{ table.get_status_display }}
+            </div>
+
+            <small>{{ table.capacity }} personnes</small>
+
+            {% for order in onsite_orders %}
+                {% if order.table_id == table.id %}
+                    <div class="order-badge">
+                        {{ order.get_status_display }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </a>
+    {% empty %}
+        <div class="staff-card">
+            Aucune table enregistrée.
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

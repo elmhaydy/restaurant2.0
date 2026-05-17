@@ -1,0 +1,78 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Cuisine | L'Héritage Gourmand{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { background:#121212; }
+    .staff-content { background:#121212; color:#E0E0E0; }
+    .chef-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding-bottom:20px;border-bottom:1px solid #333}
+    .orders-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+    .order-card{background:#1E1E1E;border-radius:14px;border-top:5px solid #D4AF37;padding:20px;box-shadow:0 4px 15px rgba(0,0,0,.3)}
+    .order-id{display:flex;justify-content:space-between;margin-bottom:15px;font-weight:700;color:#D4AF37}
+    .order-time{font-size:.8rem;color:#888}
+    .item{padding:8px 0;border-bottom:1px solid #333}
+    .item-qty{background:#333;padding:2px 8px;border-radius:4px;font-size:.8rem;margin-right:10px}
+    .order-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:20px}
+    .btn-chef{padding:10px;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.75rem;text-transform:uppercase;text-align:center;text-decoration:none;color:white}
+    .btn-prep{background:#388E3C}
+    .btn-cook{background:#FF9800}
+    .btn-ready{background:#1976D2}
+    .empty{padding:30px;text-align:center;background:#1E1E1E;border-radius:14px;color:#aaa}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chef-header">
+    <h1><i class="fas fa-fire" style="color:#FF5722;"></i> Cuisine en Direct</h1>
+    <span><i class="fas fa-circle" style="color:#4CAF50;font-size:.7rem;"></i> Connecté</span>
+</div>
+
+<div class="orders-container">
+    {% for order in orders %}
+        <div class="order-card">
+            <div class="order-id">
+                <span>
+                    #CMD-{{ order.id }}
+                    {% if order.table %}
+                        - Table {{ order.table.number }}
+                    {% else %}
+                        - Livraison
+                    {% endif %}
+                </span>
+                <span class="order-time">{{ order.created_at|timesince }}</span>
+            </div>
+
+            <div>
+                {% for item in order.items.all %}
+                    <div class="item">
+                        <span>
+                            <span class="item-qty">{{ item.quantity }}</span>
+                            {{ item.display_name }}
+                        </span>
+                    </div>
+                {% empty %}
+                    <p>Aucun article.</p>
+                {% endfor %}
+            </div>
+
+            <div class="order-actions">
+                <a class="btn-chef btn-prep" href="{% url 'staffops:order_status' order.id 'PREPARING' %}">
+                    Préparer
+                </a>
+                <a class="btn-chef btn-cook" href="{% url 'staffops:order_status' order.id 'COOKING' %}">
+                    Cuisson
+                </a>
+                <a class="btn-chef btn-ready" href="{% url 'staffops:order_status' order.id 'READY' %}">
+                    Prêt
+                </a>
+            </div>
+        </div>
+    {% empty %}
+        <div class="empty">
+            <i class="fas fa-check-circle"></i>
+            Aucune commande en cuisine.
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

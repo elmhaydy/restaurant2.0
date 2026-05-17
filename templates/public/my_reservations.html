@@ -1,0 +1,74 @@
+{% extends "accounts/espace_base.html" %}
+
+{% block title %}Mes Réservations{% endblock %}
+{% block page_title %}Mes Réservations{% endblock %}
+
+{% block extra_css %}
+.res-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--cream-border); }
+.res-row:last-child { border-bottom: none; }
+.res-row-date { font-family: var(--font-serif); font-size: .95rem; font-weight: 700; color: var(--charcoal); margin-bottom: 4px; }
+.res-row-meta { display: flex; flex-wrap: wrap; gap: 14px; }
+.res-meta-item { display: flex; align-items: center; gap: 6px; font-size: .74rem; color: var(--warm-muted); }
+.res-meta-item i { color: var(--gold); font-size: .68rem; width: 12px; }
+.res-row-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.btn-cancel-sm { background: none; border: 1.5px solid rgba(198,40,40,.3); color: rgba(198,40,40,.6); border-radius: 6px; padding: 5px 12px; font-size: .62rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+.btn-cancel-sm:hover { background: #C62828; border-color: #C62828; color: #fff; }
+@media (max-width: 600px) { .res-row { flex-direction: column; align-items: flex-start; } .res-row-right { gap: 8px; flex-wrap: wrap; } }
+{% endblock %}
+
+{% block content %}
+<div class="pcard">
+    <div class="pcard-head">
+        <div class="pcard-title">Mes <b>Réservations</b></div>
+        <a href="{% url 'reservations:create' %}" class="pcard-link">
+            <i class="fas fa-plus"></i> Nouvelle réservation
+        </a>
+    </div>
+    <div class="pcard-body" style="padding-top:6px;padding-bottom:6px;">
+        {% for reservation in reservations %}
+        <div class="res-row">
+            <div>
+                <div class="res-row-date">{{ reservation.date|date:"d F Y" }} à {{ reservation.time|time:"H:i" }}</div>
+                <div class="res-row-meta">
+                    <span class="res-meta-item">
+                        <i class="fas fa-users"></i>
+                        {{ reservation.guests }} personne{% if reservation.guests > 1 %}s{% endif %}
+                    </span>
+                    <span class="res-meta-item">
+                        <i class="fas fa-chair"></i>
+                        {% if reservation.table %}
+                            Table {{ reservation.table.number }} — {{ reservation.table.get_zone_display }}
+                        {% else %}
+                            Table non attribuée
+                        {% endif %}
+                    </span>
+                    {% if reservation.full_name %}
+                    <span class="res-meta-item">
+                        <i class="fas fa-user"></i>
+                        {{ reservation.full_name }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="res-row-right">
+                <span class="sbadge s-{{ reservation.status|lower }}">{{ reservation.get_status_display }}</span>
+                {% if reservation.status == "pending" or reservation.status == "confirmed" %}
+                <form method="post" action="{% url 'reservations:cancel_my_reservation' reservation.id %}" style="margin:0;" onsubmit="return confirm('Confirmer l\'annulation de cette réservation ?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-cancel-sm">
+                        <i class="fas fa-times"></i> Annuler
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-st">
+            <i class="fas fa-calendar-times"></i>
+            <p>Aucune réservation pour le moment.</p>
+            <a href="{% url 'reservations:create' %}" class="empty-cta">Réserver une table →</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

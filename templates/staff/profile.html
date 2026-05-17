@@ -1,0 +1,167 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Mon profil | Staff{% endblock %}
+
+{% block content %}
+<h1 style="margin-top:0;">Mon profil</h1>
+
+<div class="staff-card" style="max-width:700px;">
+
+    <div style="display:flex;align-items:center;gap:20px;margin-bottom:25px;flex-wrap:wrap;">
+
+        <div style="
+            width:80px;
+            height:80px;
+            border-radius:50%;
+            background:#8B4513;
+            color:white;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:2rem;
+            flex-shrink:0;
+        ">
+            <i class="fas fa-user"></i>
+        </div>
+
+        <div>
+            <h2 style="margin:0;">
+                {{ request.user.get_full_name|default:request.user.username }}
+            </h2>
+
+            <p style="margin:6px 0;color:#777;font-weight:600;">
+                {{ request.user.get_role_display }}
+            </p>
+
+            {% if request.user.is_active %}
+                <span style="
+                    display:inline-block;
+                    background:#E8F5E9;
+                    color:#2E7D32;
+                    padding:5px 10px;
+                    border-radius:999px;
+                    font-size:.75rem;
+                    font-weight:700;
+                ">
+                    Compte actif
+                </span>
+            {% else %}
+                <span style="
+                    display:inline-block;
+                    background:#FFEBEE;
+                    color:#C62828;
+                    padding:5px 10px;
+                    border-radius:999px;
+                    font-size:.75rem;
+                    font-weight:700;
+                ">
+                    Compte désactivé
+                </span>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <div style="display:grid;gap:15px;">
+
+        <div style="
+            background:#FAFAFA;
+            padding:14px;
+            border-radius:12px;
+        ">
+            <strong>Nom d'utilisateur :</strong><br>
+            {{ request.user.username }}
+        </div>
+
+        <div style="
+            background:#FAFAFA;
+            padding:14px;
+            border-radius:12px;
+        ">
+            <strong>Email :</strong><br>
+            {{ request.user.email|default:"Non renseigné" }}
+        </div>
+
+        <div style="
+            background:#FAFAFA;
+            padding:14px;
+            border-radius:12px;
+        ">
+            <strong>Téléphone :</strong><br>
+            {{ request.user.phone|default:"Non renseigné" }}
+        </div>
+
+        <div style="
+            background:#FAFAFA;
+            padding:14px;
+            border-radius:12px;
+        ">
+            <strong>Adresse :</strong><br>
+            {{ request.user.address|default:"Non renseignée" }}
+        </div>
+
+        <div style="
+            background:#FAFAFA;
+            padding:14px;
+            border-radius:12px;
+        ">
+            <strong>Dernière connexion :</strong><br>
+            {{ request.user.last_login|date:"d/m/Y H:i"|default:"Jamais" }}
+        </div>
+
+    </div>
+
+    <div style="
+        margin-top:25px;
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+    ">
+
+        {% if request.user.role == 'MANAGER' %}
+            <a href="{% url 'staffops:manager_dashboard' %}"
+               class="btn-staff btn-primary-staff">
+                <i class="fas fa-chart-line"></i>
+                Dashboard Manager
+            </a>
+
+        {% elif request.user.role == 'CHEF' %}
+            <a href="{% url 'staffops:chef' %}"
+               class="btn-staff btn-primary-staff">
+                <i class="fas fa-fire"></i>
+                Espace Cuisine
+            </a>
+
+        {% elif request.user.role == 'SERVEUR' %}
+            <a href="{% url 'staffops:serveur' %}"
+               class="btn-staff btn-primary-staff">
+                <i class="fas fa-concierge-bell"></i>
+                Espace Service
+            </a>
+
+        {% elif request.user.role == 'CAISSIER' %}
+            <a href="{% url 'staffops:caissier' %}"
+               class="btn-staff btn-primary-staff">
+                <i class="fas fa-cash-register"></i>
+                Espace Caisse
+            </a>
+
+        {% elif request.user.role == 'MENAGE' %}
+            <a href="{% url 'staffops:menage' %}"
+               class="btn-staff btn-primary-staff">
+                <i class="fas fa-broom"></i>
+                Espace Entretien
+            </a>
+
+        {% elif request.user.role == 'LIVREUR' %}
+            <a href="{% url 'staffops:livreur' %}"
+               class="btn-staff btn-primary-staff">
+                <i class="fas fa-motorcycle"></i>
+                Espace Livraison
+            </a>
+        {% endif %}
+
+    </div>
+
+</div>
+{% endblock %}

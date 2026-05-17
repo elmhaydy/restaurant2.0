@@ -1,0 +1,103 @@
+{% extends "public/base.html" %}
+
+{% block title %}Checkout | L'Héritage{% endblock %}
+
+{% block content %}
+<style>
+    .checkout-container {
+        max-width:1000px;
+        margin:60px auto;
+        padding:0 20px;
+        display:grid;
+        grid-template-columns:1.4fr .9fr;
+        gap:35px;
+    }
+
+    .checkout-card {
+        background:white;
+        padding:35px;
+        border-radius:15px;
+        box-shadow:0 10px 30px rgba(0,0,0,.05);
+    }
+
+    .form-grid {
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:18px;
+    }
+
+    .form-group.full {
+        grid-column:1/-1;
+    }
+
+    .form-control {
+        width:100%;
+        padding:12px;
+        border:1px solid #DDD;
+        border-radius:8px;
+    }
+
+    @media(max-width:900px) {
+        .checkout-container {
+            grid-template-columns:1fr;
+        }
+    }
+</style>
+
+<div class="checkout-container">
+    <form method="POST" class="checkout-card">
+    {% csrf_token %}
+
+    <h1 style="font-family:var(--font-serif);">Finaliser la commande</h1>
+
+    <div class="form-grid">
+        <div class="form-group">
+            <label>Prénom</label>
+            <input name="first_name" class="form-control" value="{{ request.user.first_name }}" required>
+        </div>
+
+        <div class="form-group">
+            <label>Nom</label>
+            <input name="last_name" class="form-control" value="{{ request.user.last_name }}" required>
+        </div>
+
+        <div class="form-group full">
+            <label>Téléphone</label>
+            <input name="phone" class="form-control" value="{{ request.user.phone|default:'' }}" required>
+        </div>
+
+        <div class="form-group full">
+            <label>Adresse de livraison</label>
+            <input name="address" class="form-control" required>
+        </div>
+
+        <div class="form-group full">
+            <label>Notes</label>
+            <textarea name="notes" class="form-control" rows="3" placeholder="Ex: sans sel, sauce à part..."></textarea>
+        </div>
+
+        <input type="hidden" name="order_type" value="DELIVERY">
+    </div>
+
+    <button class="btn-main" style="width:100%; margin-top:25px;">
+        Confirmer la commande
+    </button>
+</form>
+
+    <div class="checkout-card">
+        <h2 style="font-family:var(--font-serif);">Votre commande</h2>
+
+        {% for item in cart_items %}
+            <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #EEE;">
+                <span>{{ item.quantity }} × {{ item.dish.name }}</span>
+                <strong>{{ item.subtotal }} MAD</strong>
+            </div>
+        {% endfor %}
+
+        <div style="display:flex; justify-content:space-between; margin-top:25px; font-size:1.3rem; color:#8B4513;">
+            <span>Total</span>
+            <strong>{{ cart_total }} MAD</strong>
+        </div>
+    </div>
+</div>
+{% endblock %}

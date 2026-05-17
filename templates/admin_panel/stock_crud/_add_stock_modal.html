@@ -1,0 +1,28 @@
+<div class="modal" id="addIngredientModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2>Ajouter un ingrédient</h2>
+            <button type="button" class="close-btn" onclick="closeModal('addIngredientModal')">×</button>
+        </div>
+
+        <form method="POST" action="{% url 'admin_panel:ingredient_create' %}">
+            {% csrf_token %}
+
+            <div class="modal-body">
+                <div class="form-grid">
+                    {% for field in form %}
+                        <div class="form-group">
+                            <label>{{ field.label }}</label>
+                            {{ field }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('addIngredientModal')">Annuler</button>
+                <button type="submit" class="btn-save">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>

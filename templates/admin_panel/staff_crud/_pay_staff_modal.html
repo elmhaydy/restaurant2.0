@@ -1,0 +1,41 @@
+<div class="modal" id="payStaffModal{{ employee.id }}">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2>Payer {{ employee.get_full_name|default:employee.username }}</h2>
+            <button type="button" class="close-btn" onclick="closeModal('payStaffModal{{ employee.id }}')">×</button>
+        </div>
+
+        <form method="POST" action="{% url 'admin_panel:staff_payment_create' employee.id %}">
+            {% csrf_token %}
+
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Montant</label>
+                        {{ payment_form.amount }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Méthode</label>
+                        {{ payment_form.method }}
+                    </div>
+
+                    <div class="form-group full">
+                        <label>Période</label>
+                        {{ payment_form.period }}
+                    </div>
+
+                    <div class="form-group full">
+                        <label>Note</label>
+                        {{ payment_form.note }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('payStaffModal{{ employee.id }}')">Annuler</button>
+                <button type="submit" class="btn-save">Valider le paiement</button>
+            </div>
+        </form>
+    </div>
+</div>

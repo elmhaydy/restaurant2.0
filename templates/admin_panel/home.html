@@ -1,0 +1,598 @@
+{% extends "admin_panel/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Tableau de Bord{% endblock %}
+
+{% block extra_css %}
+/* ── Dashboard grid ── */
+.dash-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    margin-bottom: 22px;
+}
+@media (max-width: 1200px) { .dash-kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 640px)  { .dash-kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.dash-row {
+    display: grid;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+.dash-row-2-1 { grid-template-columns: 2fr 1fr; }
+.dash-row-3   { grid-template-columns: 1fr 1fr 1fr; }
+.dash-row-2-1-small { grid-template-columns: minmax(0,2fr) minmax(0,1fr); }
+@media (max-width: 1024px) {
+    .dash-row-2-1, .dash-row-3, .dash-row-2-1-small { grid-template-columns: 1fr; }
+}
+
+/* ── KPI card ── */
+.kpi-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    padding: 20px 18px 16px;
+    position: relative;
+    overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+}
+.kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,.07); }
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--kpi-accent, var(--gold));
+    border-radius: 14px 14px 0 0;
+}
+.kpi-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--kpi-bg, #FEF8EC);
+    color: var(--kpi-accent, var(--gold));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 14px;
+}
+.kpi-label {
+    font-size: .65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+.kpi-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+}
+.kpi-value small {
+    font-size: .9rem;
+    font-weight: 600;
+    opacity: .45;
+    margin-left: 3px;
+}
+.kpi-sub {
+    font-size: .68rem;
+    color: var(--text-muted);
+    margin-top: 5px;
+}
+
+/* ── Chart card ── */
+.chart-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    padding: 22px 24px 18px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.03);
+    display: flex;
+    flex-direction: column;
+}
+.chart-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    flex-shrink: 0;
+}
+.chart-card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.chart-card-sub {
+    font-size: .68rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+.chart-wrap { position: relative; flex: 1; min-height: 0; }
+.chart-wrap canvas { max-height: 100%; }
+
+/* ── Status colors ── */
+.s-pending       { background:#FFF3E0; color:#E65100; }
+.s-preparing     { background:#E3F2FD; color:#0D47A1; }
+.s-cooking       { background:#E8EAF6; color:#3949AB; }
+.s-ready         { background:#F3E5F5; color:#6A1B9A; }
+.s-served        { background:#E8F5E9; color:#1B5E20; }
+.s-paid          { background:#E0F2F1; color:#004D40; }
+.s-cancelled     { background:#FFEBEE; color:#B71C1C; }
+.s-bill_requested{ background:#FFF8E1; color:#F57F17; }
+.s-out_for_delivery { background:#F1F8E9; color:#33691E; }
+.s-delivered     { background:#E8F5E9; color:#2E7D32; }
+
+/* ── Recent orders table ── */
+.orders-table { width: 100%; border-collapse: collapse; }
+.orders-table th {
+    text-align: left; padding: 9px 12px;
+    font-size: .62rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .1em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+}
+.orders-table td {
+    padding: 12px; font-size: .83rem;
+    border-bottom: 1px solid var(--border);
+    color: #444; vertical-align: middle;
+}
+.orders-table tr:last-child td { border-bottom: none; }
+.orders-table tbody tr:hover td { background: #FAFAF8; }
+.order-id { font-weight: 700; color: var(--text); font-family: monospace; }
+.status-pill {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-size: .62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+/* ── Stock / Logs sidebar card ── */
+.side-section-title {
+    font-size: .6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .15em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+.stock-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid #F3F3F1;
+}
+.stock-item:last-child { border-bottom: none; }
+.stock-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+    background: #C62828;
+}
+.stock-name { font-size: .82rem; font-weight: 500; color: var(--text); flex: 1; }
+.stock-qty  { font-size: .75rem; color: var(--text-muted); }
+.log-item {
+    display: flex;
+    gap: 9px;
+    padding: 8px 0;
+    border-bottom: 1px solid #F3F3F1;
+    align-items: flex-start;
+}
+.log-item:last-child { border-bottom: none; }
+.log-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gold);
+    margin-top: 6px;
+    flex-shrink: 0;
+}
+.log-text { font-size: .78rem; color: #666; line-height: 1.45; }
+.log-user { font-weight: 600; color: var(--text); }
+.log-meta { font-size: .65rem; color: #aaa; margin-top: 2px; }
+
+/* ── Empty state ── */
+.empty-dash { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: .85rem; }
+{% endblock %}
+
+{% block content %}
+
+<!-- ════ KPI Row ════ -->
+<div class="dash-kpi-grid">
+
+    <div class="kpi-card" style="--kpi-accent:#C9922A;--kpi-bg:#FEF8EC;">
+        <div class="kpi-icon"><i class="fas fa-shopping-bag"></i></div>
+        <div class="kpi-label">Commandes Aujourd'hui</div>
+        <div class="kpi-value">{{ kpi_orders_today }}</div>
+        <div class="kpi-sub">{{ kpi_orders_total }} au total</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#2E7D32;--kpi-bg:#E8F5E9;">
+        <div class="kpi-icon"><i class="fas fa-coins"></i></div>
+        <div class="kpi-label">Revenu Aujourd'hui</div>
+        <div class="kpi-value">{{ kpi_revenue_today }}<small>MAD</small></div>
+        <div class="kpi-sub">Commandes payées</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#1976D2;--kpi-bg:#E3F2FD;">
+        <div class="kpi-icon"><i class="fas fa-calendar-check"></i></div>
+        <div class="kpi-label">Réservations</div>
+        <div class="kpi-value">{{ kpi_reservations }}</div>
+        <div class="kpi-sub">Total enregistrées</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#7B1FA2;--kpi-bg:#F3E5F5;">
+        <div class="kpi-icon"><i class="fas fa-users"></i></div>
+        <div class="kpi-label">Utilisateurs</div>
+        <div class="kpi-value">{{ kpi_users }}</div>
+        <div class="kpi-sub">Comptes actifs</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#C62828;--kpi-bg:#FFEBEE;">
+        <div class="kpi-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="kpi-label">Alertes Stock</div>
+        <div class="kpi-value">{{ kpi_low_stock }}</div>
+        <div class="kpi-sub">Sous le seuil critique</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#00838F;--kpi-bg:#E0F7FA;">
+        <div class="kpi-icon"><i class="fas fa-chair"></i></div>
+        <div class="kpi-label">Tables Libres</div>
+        <div class="kpi-value">{{ kpi_tables_avail }}</div>
+        <div class="kpi-sub">Disponibles maintenant</div>
+    </div>
+
+</div>
+
+<!-- ════ Row 2: Revenue + Orders Status ════ -->
+<div class="dash-row dash-row-2-1">
+
+    <div class="chart-card" style="min-height:280px;">
+        <div class="chart-card-head">
+            <div>
+                <div class="chart-card-title">Revenu des 7 Derniers Jours</div>
+                <div class="chart-card-sub">Commandes au statut Payée uniquement</div>
+            </div>
+            <a href="{% url 'admin_panel:orders' %}" style="font-size:.72rem;color:var(--gold);font-weight:600;text-decoration:none;">Voir tout →</a>
+        </div>
+        <div class="chart-wrap" style="height:210px;">
+            <canvas id="chartRevenue"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-card" style="min-height:280px;">
+        <div class="chart-card-head">
+            <div>
+                <div class="chart-card-title">Statut des Commandes</div>
+                <div class="chart-card-sub">Répartition globale</div>
+            </div>
+        </div>
+        <div class="chart-wrap" style="height:210px;">
+            <canvas id="chartOrdersStatus"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<!-- ════ Row 3: Top Dishes + Reservations + Users ════ -->
+<div class="dash-row dash-row-3">
+
+    <div class="chart-card" style="min-height:260px;">
+        <div class="chart-card-head">
+            <div>
+                <div class="chart-card-title">Top 5 Plats Commandés</div>
+                <div class="chart-card-sub">Par quantité totale</div>
+            </div>
+        </div>
+        <div class="chart-wrap" style="height:190px;">
+            <canvas id="chartTopDishes"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-card" style="min-height:260px;">
+        <div class="chart-card-head">
+            <div>
+                <div class="chart-card-title">Réservations</div>
+                <div class="chart-card-sub">Par statut</div>
+            </div>
+        </div>
+        <div class="chart-wrap" style="height:190px;">
+            <canvas id="chartReservations"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-card" style="min-height:260px;">
+        <div class="chart-card-head">
+            <div>
+                <div class="chart-card-title">Équipe</div>
+                <div class="chart-card-sub">Utilisateurs par rôle</div>
+            </div>
+        </div>
+        <div class="chart-wrap" style="height:190px;">
+            <canvas id="chartUsersRole"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<!-- ════ Row 4: Orders Mode + Tables ════ -->
+<div class="dash-row" style="grid-template-columns:1fr 1fr;margin-bottom:18px;">
+
+    <div class="chart-card" style="min-height:230px;">
+        <div class="chart-card-head">
+            <div>
+                <div class="chart-card-title">Mode de Commande</div>
+                <div class="chart-card-sub">Sur place · À emporter · Livraison</div>
+            </div>
+        </div>
+        <div class="chart-wrap" style="height:165px;">
+            <canvas id="chartOrdersMode"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-card" style="min-height:230px;">
+        <div class="chart-card-head">
+            <div>
+                <div class="chart-card-title">Tables</div>
+                <div class="chart-card-sub">État en temps réel</div>
+            </div>
+            <a href="{% url 'admin_panel:tables' %}" style="font-size:.72rem;color:var(--gold);font-weight:600;text-decoration:none;">Gérer →</a>
+        </div>
+        <div class="chart-wrap" style="height:165px;">
+            <canvas id="chartTables"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<!-- ════ Row 5: Recent Orders + Stock/Logs ════ -->
+<div class="dash-row dash-row-2-1-small">
+
+    <!-- Recent Orders -->
+    <div class="chart-card" style="padding-bottom:8px;">
+        <div class="chart-card-head">
+            <div>
+                <div class="chart-card-title">Commandes Récentes</div>
+                <div class="chart-card-sub">Dernières 8 commandes</div>
+            </div>
+            <a href="{% url 'admin_panel:orders' %}" style="font-size:.72rem;color:var(--gold);font-weight:600;text-decoration:none;">Voir tout →</a>
+        </div>
+        {% if recent_orders %}
+        <div style="overflow-x:auto;">
+        <table class="orders-table">
+            <thead>
+                <tr>
+                    <th>Ref</th>
+                    <th>Client</th>
+                    <th>Mode</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for order in recent_orders %}
+                <tr>
+                    <td><span class="order-id">#{{ order.id }}</span></td>
+                    <td>
+                        {% if order.user %}{{ order.user.get_full_name|default:order.user.username }}
+                        {% else %}{{ order.customer_name|default:"Invité" }}{% endif %}
+                    </td>
+                    <td style="font-size:.78rem;">{{ order.get_mode_display }}</td>
+                    <td>
+                        <span class="status-pill s-{{ order.status|lower }}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <div class="empty-dash"><i class="fas fa-inbox" style="font-size:1.4rem;margin-bottom:8px;display:block;opacity:.3;"></i>Aucune commande.</div>
+        {% endif %}
+    </div>
+
+    <!-- Stock Alerts + Activity Logs -->
+    <div style="display:flex;flex-direction:column;gap:18px;">
+
+        <div class="chart-card" style="flex:1;">
+            <div class="side-section-title"><i class="fas fa-exclamation-triangle" style="color:#C62828;margin-right:6px;"></i>Alertes Stock</div>
+            {% if low_stock_items %}
+                {% for ing in low_stock_items %}
+                <div class="stock-item">
+                    <div class="stock-dot"></div>
+                    <div class="stock-name">{{ ing.name }}</div>
+                    <div class="stock-qty">{{ ing.quantity }} / {{ ing.alert_threshold }} {{ ing.unit }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align:center;padding:24px 0;color:var(--text-muted);font-size:.82rem;">
+                    <i class="fas fa-check-circle" style="color:#2E7D32;font-size:1.2rem;margin-bottom:6px;display:block;"></i>
+                    Tout le stock est OK.
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="chart-card" style="flex:1;">
+            <div class="side-section-title"><i class="fas fa-history" style="color:var(--gold);margin-right:6px;"></i>Activité Récente</div>
+            {% if logs %}
+                {% for log in logs %}
+                <div class="log-item">
+                    <div class="log-dot"></div>
+                    <div>
+                        <div class="log-text">
+                            {% if log.user %}<span class="log-user">{{ log.user.username }}</span> · {% endif %}
+                            {{ log.action }} <span style="color:#aaa;font-size:.72rem;">{{ log.path }}</span>
+                        </div>
+                        <div class="log-meta">{{ log.created_at|date:"d M Y · H:i" }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-dash">Aucune activité récente.</div>
+            {% endif %}
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    /* ── Global defaults ── */
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#888';
+    Chart.defaults.plugins.legend.position = 'bottom';
+    Chart.defaults.plugins.legend.labels.boxWidth = 10;
+    Chart.defaults.plugins.legend.labels.padding = 14;
+    Chart.defaults.plugins.legend.labels.font = { size: 11 };
+
+    const PALETTE = [
+        '#C9922A','#8B4513','#1976D2','#2E7D32',
+        '#7B1FA2','#F57F17','#546E7A','#C62828',
+        '#00838F','#558B2F'
+    ];
+
+    /* ── Data from Django ── */
+    const revenueLabels  = {{ chart_revenue_labels|safe }};
+    const revenueData    = {{ chart_revenue_data|safe }};
+    const ordersStatus   = {{ chart_orders_status|safe }};
+    const ordersMode     = {{ chart_orders_mode|safe }};
+    const topDishes      = {{ chart_top_dishes|safe }};
+    const resStatus      = {{ chart_res_status|safe }};
+    const usersRole      = {{ chart_users_role|safe }};
+    const tablesStatus   = {{ chart_tables_status|safe }};
+
+    /* ── Helpers ── */
+    function donut(id, data, palette) {
+        const ctx = document.getElementById(id);
+        if (!ctx || !data.length) return;
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: data.map(d => d.label),
+                datasets: [{
+                    data: data.map(d => d.count),
+                    backgroundColor: palette || PALETTE,
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 6,
+                }]
+            },
+            options: {
+                cutout: '68%',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` ${ctx.label}: ${ctx.raw}`
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /* ── Revenue line ── */
+    (function () {
+        const ctx = document.getElementById('chartRevenue');
+        if (!ctx) return;
+        const grad = ctx.getContext('2d').createLinearGradient(0, 0, 0, 200);
+        grad.addColorStop(0, 'rgba(201,146,42,.22)');
+        grad.addColorStop(1, 'rgba(201,146,42,.01)');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: revenueLabels,
+                datasets: [{
+                    label: 'Revenu (MAD)',
+                    data: revenueData,
+                    borderColor: '#C9922A',
+                    backgroundColor: grad,
+                    borderWidth: 2.5,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#C9922A',
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.42,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` ${ctx.raw.toFixed(2)} MAD`
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                    y: {
+                        grid: { color: '#F0EDE8' },
+                        ticks: {
+                            font: { size: 11 },
+                            callback: v => v + ' MAD'
+                        }
+                    }
+                }
+            }
+        });
+    })();
+
+    /* ── Orders by status ── */
+    donut('chartOrdersStatus', ordersStatus);
+
+    /* ── Top 5 dishes (horizontal bar) ── */
+    (function () {
+        const ctx = document.getElementById('chartTopDishes');
+        if (!ctx || !topDishes.length) return;
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: topDishes.map(d => d.label),
+                datasets: [{
+                    label: 'Qté commandée',
+                    data: topDishes.map(d => d.qty),
+                    backgroundColor: PALETTE.slice(0, topDishes.length),
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: '#F0EDE8' }, ticks: { font: { size: 11 } } },
+                    y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+                }
+            }
+        });
+    })();
+
+    /* ── Reservations by status ── */
+    donut('chartReservations', resStatus, ['#1976D2','#2E7D32','#C62828','#7B1FA2','#F57F17']);
+
+    /* ── Users by role ── */
+    donut('chartUsersRole', usersRole);
+
+    /* ── Orders by mode ── */
+    donut('chartOrdersMode', ordersMode, ['#C9922A','#1976D2','#2E7D32']);
+
+    /* ── Tables by status ── */
+    donut('chartTables', tablesStatus, ['#2E7D32','#1976D2','#C62828','#F57F17','#546E7A']);
+
+})();
+</script>
+{% endblock %}

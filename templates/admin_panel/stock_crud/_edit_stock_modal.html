@@ -1,0 +1,104 @@
+<div class="modal" id="editIngredientModal{{ ingredient.id }}">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2>Modifier {{ ingredient.name }}</h2>
+
+            <button type="button"
+                    class="close-btn"
+                    onclick="closeModal('editIngredientModal{{ ingredient.id }}')">
+                ×
+            </button>
+        </div>
+
+        <form method="POST" action="{% url 'admin_panel:ingredient_update' ingredient.id %}">
+            {% csrf_token %}
+
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Catégorie</label>
+                        <select name="category" class="form-control">
+                            <option value="">Sans catégorie</option>
+                            {% for category in stock_categories %}
+                                <option value="{{ category.id }}" {% if ingredient.category_id == category.id %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nom de l’ingrédient</label>
+                        <input type="text"
+                               name="name"
+                               class="form-control"
+                               value="{{ ingredient.name }}"
+                               placeholder="Ex: Farine T55"
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Quantité en stock</label>
+                        <input type="number"
+                               step="0.01"
+                               min="0"
+                               name="quantity"
+                               class="form-control"
+                               value="{{ ingredient.quantity }}"
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Unité</label>
+                        <select name="unit" class="form-control" required>
+                            <option value="g" {% if ingredient.unit == "g" %}selected{% endif %}>g</option>
+                            <option value="kg" {% if ingredient.unit == "kg" %}selected{% endif %}>kg</option>
+                            <option value="ml" {% if ingredient.unit == "ml" %}selected{% endif %}>ml</option>
+                            <option value="l" {% if ingredient.unit == "l" %}selected{% endif %}>l</option>
+                            <option value="piece" {% if ingredient.unit == "piece" %}selected{% endif %}>pièce</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Prix unitaire</label>
+                        <input type="number"
+                               step="0.01"
+                               min="0"
+                               name="unit_price"
+                               class="form-control"
+                               value="{{ ingredient.unit_price }}"
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Seuil d’alerte</label>
+                        <input type="number"
+                               step="0.01"
+                               min="0"
+                               name="alert_threshold"
+                               class="form-control"
+                               value="{{ ingredient.alert_threshold }}"
+                               required>
+                    </div>
+                </div>
+
+                <div style="background:#FDF5E6; padding:15px; border-radius:10px; margin-top:20px; color:#8B4513;">
+                    <strong>Note :</strong>
+                    Cet ingrédient peut être utilisé dans la composition des plats du menu.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn-cancel"
+                        onclick="closeModal('editIngredientModal{{ ingredient.id }}')">
+                    Annuler
+                </button>
+
+                <button type="submit" class="btn-save">
+                    Sauvegarder
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

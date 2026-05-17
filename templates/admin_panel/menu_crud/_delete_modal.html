@@ -1,0 +1,38 @@
+<div class="modal" id="deleteModal{{ dish.id }}">
+    <div class="modal-card" style="max-width:560px;">
+        <div class="modal-header">
+            <h2 style="margin:0; font-family:'Playfair Display', serif;">
+                Supprimer le plat
+            </h2>
+
+            <button type="button" class="close-btn" onclick="closeModal('deleteModal{{ dish.id }}')">
+                ×
+            </button>
+        </div>
+
+        <form method="post" action="{% url 'admin_panel:dish_delete' dish.id %}">
+            {% csrf_token %}
+
+            <div class="modal-body">
+                <p>
+                    Voulez-vous vraiment supprimer ou désactiver le plat
+                    <strong>{{ dish.name }}</strong> ?
+                </p>
+
+                <div class="composition-summary">
+                    Cette action peut impacter le menu public et les futures commandes.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="action-btn btn-view" onclick="closeModal('deleteModal{{ dish.id }}')">
+                    Annuler
+                </button>
+
+                <button type="submit" class="action-btn btn-delete">
+                    <i class="fas fa-trash"></i> Confirmer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

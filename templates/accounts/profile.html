@@ -1,0 +1,126 @@
+{% extends "accounts/espace_base.html" %}
+
+{% block title %}Mon Profil{% endblock %}
+{% block page_title %}Mon Profil{% endblock %}
+
+{% block extra_css %}
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.info-lbl { font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--warm-muted); font-weight: 600; margin-bottom: 5px; }
+.info-val { font-size: .88rem; color: var(--charcoal); font-weight: 500; background: var(--cream); border: 1.5px solid var(--cream-border); border-radius: var(--radius-sm); padding: 10px 13px; }
+.info-val.empty { color: var(--warm-muted); font-style: italic; font-weight: 400; }
+.list-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--cream-border); }
+.list-row:last-child { border-bottom: none; }
+.list-row-id { font-family: var(--font-serif); font-size: .9rem; font-weight: 700; color: var(--charcoal); margin-bottom: 3px; }
+.list-row-meta { font-size: .72rem; color: var(--warm-muted); }
+.list-row-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+@media (max-width: 600px) { .info-grid { grid-template-columns: 1fr; } }
+{% endblock %}
+
+{% block content %}
+
+<!-- Informations personnelles -->
+<div class="pcard">
+    <div class="pcard-head">
+        <div class="pcard-title">Informations <b>Personnelles</b></div>
+    </div>
+    <div class="pcard-body">
+        <div class="info-grid">
+            <div>
+                <div class="info-lbl">Prénom</div>
+                <div class="info-val {% if not request.user.first_name %}empty{% endif %}">{{ request.user.first_name|default:"Non renseigné" }}</div>
+            </div>
+            <div>
+                <div class="info-lbl">Nom</div>
+                <div class="info-val {% if not request.user.last_name %}empty{% endif %}">{{ request.user.last_name|default:"Non renseigné" }}</div>
+            </div>
+            <div>
+                <div class="info-lbl">Nom d'utilisateur</div>
+                <div class="info-val">{{ request.user.username }}</div>
+            </div>
+            <div>
+                <div class="info-lbl">Email</div>
+                <div class="info-val {% if not request.user.email %}empty{% endif %}">{{ request.user.email|default:"Non renseigné" }}</div>
+            </div>
+            <div>
+                <div class="info-lbl">Téléphone</div>
+                <div class="info-val {% if not request.user.phone %}empty{% endif %}">{{ request.user.phone|default:"Non renseigné" }}</div>
+            </div>
+            <div>
+                <div class="info-lbl">Membre depuis</div>
+                <div class="info-val">{{ request.user.date_joined|date:"d F Y" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mes Commandes -->
+<div class="pcard">
+    <div class="pcard-head">
+        <div class="pcard-title">Mes <b>Commandes</b></div>
+        <a href="{% url 'orders:my_orders' %}" class="pcard-link">Tout voir <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="pcard-body" style="padding-top:6px;padding-bottom:6px;">
+        {% for order in recent_orders %}
+        <div class="list-row">
+            <div>
+                <div class="list-row-id">#ORD-{{ order.id }}</div>
+                <div class="list-row-meta">
+                    {{ order.created_at|date:"d M Y · H:i" }} &nbsp;·&nbsp; {{ order.items.count }} article{% if order.items.count > 1 %}s{% endif %} &nbsp;·&nbsp; {{ order.get_mode_display }}
+                </div>
+            </div>
+            <div class="list-row-right">
+                <span class="sbadge s-{{ order.status|lower }}">{{ order.get_status_display }}</span>
+                <span style="font-size:.85rem;font-weight:700;color:var(--charcoal);white-space:nowrap;">
+                    {{ order.total }}&thinsp;<small style="font-size:.72rem;font-weight:400;opacity:.45;">MAD</small>
+                </span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-st">
+            <i class="fas fa-shopping-bag"></i>
+            <p>Aucune commande pour le moment.</p>
+            <a href="{% url 'menu:list' %}" class="empty-cta">Explorer le menu →</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Mes Réservations -->
+<div class="pcard">
+    <div class="pcard-head">
+        <div class="pcard-title">Mes <b>Réservations</b></div>
+        <a href="{% url 'reservations:my_reservations' %}" class="pcard-link">Tout voir <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="pcard-body" style="padding-top:6px;padding-bottom:6px;">
+        {% for res in recent_reservations %}
+        <div class="list-row">
+            <div>
+                <div class="list-row-id">{{ res.date|date:"d F Y" }} à {{ res.time|time:"H:i" }}</div>
+                <div class="list-row-meta">
+                    {{ res.guests }} personne{% if res.guests > 1 %}s{% endif %}
+                    {% if res.table %}&nbsp;·&nbsp;Table {{ res.table.number|default:res.table.pk }}{% endif %}
+                </div>
+            </div>
+            <div class="list-row-right">
+                <span class="sbadge s-{{ res.status|lower }}">{{ res.get_status_display }}</span>
+                {% if res.status == "pending" or res.status == "confirmed" %}
+                <form method="post" action="{% url 'reservations:cancel_my_reservation' res.id %}" style="margin:0;" onsubmit="return confirm('Annuler cette réservation ?')">
+                    {% csrf_token %}
+                    <button type="submit" style="background:none;border:none;cursor:pointer;font-size:.65rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(198,40,40,.55);padding:0;transition:color .2s;" onmouseover="this.style.color='#C62828'" onmouseout="this.style.color='rgba(198,40,40,.55)'">
+                        Annuler
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-st">
+            <i class="fas fa-calendar-alt"></i>
+            <p>Aucune réservation pour le moment.</p>
+            <a href="{% url 'reservations:create' %}" class="empty-cta">Réserver une table →</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

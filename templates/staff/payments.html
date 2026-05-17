@@ -1,0 +1,34 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Mes paiements | Staff{% endblock %}
+
+{% block content %}
+<h1 style="margin-top:0;">Mes paiements</h1>
+
+<div class="staff-card">
+    {% for payment in payments %}
+        <div style="display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:14px 0;">
+            <div>
+                <strong>{{ payment.period }}</strong><br>
+                <small>
+                    {{ payment.get_method_display }}
+                    • payé le {{ payment.paid_at|date:"d/m/Y H:i" }}
+                    {% if payment.paid_by %}
+                        • par {{ payment.paid_by.get_full_name|default:payment.paid_by.username }}
+                    {% endif %}
+                </small>
+
+                {% if payment.note %}
+                    <div style="color:#777;margin-top:5px;">{{ payment.note }}</div>
+                {% endif %}
+            </div>
+
+            <strong style="color:#8B4513;font-size:1.1rem;">
+                {{ payment.amount }} MAD
+            </strong>
+        </div>
+    {% empty %}
+        <p style="color:#777;">Aucun paiement enregistré.</p>
+    {% endfor %}
+</div>
+{% endblock %}

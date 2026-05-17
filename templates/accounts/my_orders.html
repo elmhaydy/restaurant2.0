@@ -1,0 +1,55 @@
+{% extends "accounts/espace_base.html" %}
+
+{% block title %}Mes Commandes{% endblock %}
+{% block page_title %}Mes Commandes{% endblock %}
+
+{% block extra_css %}
+.list-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--cream-border); }
+.list-row:last-child { border-bottom: none; }
+.list-row-id { font-family: var(--font-serif); font-size: .95rem; font-weight: 700; color: var(--charcoal); margin-bottom: 4px; }
+.list-row-meta { font-size: .72rem; color: var(--warm-muted); margin-bottom: 8px; }
+.list-row-dishes { font-size: .78rem; color: var(--charcoal); opacity: .7; line-height: 1.5; }
+.list-row-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.list-row-price { font-size: .92rem; font-weight: 700; color: var(--charcoal); white-space: nowrap; }
+.list-row-price small { font-size: .7rem; font-weight: 400; opacity: .45; }
+{% endblock %}
+
+{% block content %}
+<div class="pcard">
+    <div class="pcard-head">
+        <div class="pcard-title">Historique des <b>Commandes</b></div>
+        <a href="{% url 'reservations:create' %}" class="pcard-link">
+            <i class="fas fa-calendar-plus"></i> Réserver une table
+        </a>
+    </div>
+    <div class="pcard-body" style="padding-top:6px;padding-bottom:6px;">
+        {% for order in orders %}
+        <div class="list-row">
+            <div style="min-width:0;flex:1;">
+                <div class="list-row-id">#ORD-{{ order.id }}</div>
+                <div class="list-row-meta">
+                    {{ order.created_at|date:"d F Y · H:i" }} &nbsp;·&nbsp; {{ order.get_mode_display }}
+                </div>
+                <div class="list-row-dishes">
+                    {% for item in order.items.all %}
+                        {{ item.quantity }}× {{ item.display_name }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="list-row-right">
+                <span class="sbadge s-{{ order.status|lower }}">{{ order.get_status_display }}</span>
+                <span class="list-row-price">
+                    {{ order.total }}&thinsp;<small>MAD</small>
+                </span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-st">
+            <i class="fas fa-shopping-bag"></i>
+            <p>Aucune commande pour le moment.</p>
+            <a href="{% url 'menu:list' %}" class="empty-cta">Explorer le menu →</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

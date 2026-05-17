@@ -1,0 +1,146 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Gestion du Personnel{% endblock %}
+{% block page_title %}Gestion du Personnel{% endblock %}
+
+{% block extra_css %}
+.staff-cell {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.staff-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #FDF5E6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #8B4513;
+}
+
+.role-badge {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: #F0F0F0;
+    color: #666;
+}
+
+.action-btn {
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-right: 6px;
+    text-decoration: none;
+}
+
+.edit-btn { background: #FFF3E0; color: #EF6C00; }
+.delete-btn { background: #FFEBEE; color: #C62828; }
+.pay-btn { background: #E8F5E9; color: #2E7D32; }
+.history-btn { background: #E3F2FD; color: #1976D2; }
+{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="card-header">
+        <h2>Équipe du Restaurant</h2>
+
+        <button type="button" class="btn-add" onclick="openModal('addStaffModal')">
+            + Ajouter un Employé
+        </button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Employé</th>
+                <th>Rôle</th>
+                <th>Email</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for employee in staff_users %}
+                <tr>
+                    <td>
+                        <div class="staff-cell">
+                            <div class="staff-avatar">
+                                {{ employee.username|slice:":2"|upper }}
+                            </div>
+
+                            <div>
+                                <div style="font-weight: 600;">
+                                    {{ employee.get_full_name|default:employee.username }}
+                                </div>
+                                <div style="font-size: 0.75rem; color: #888;">
+                                    ID: #EMP-{{ employee.id|stringformat:"03d" }}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td>
+                        <span class="role-badge">
+                            {{ employee.get_role_display|default:employee.role }}
+                        </span>
+                    </td>
+
+                    <td>{{ employee.email|default:"-" }}</td>
+
+                    <td>
+                        {% if employee.is_active %}
+                            <span style="color:#2E7D32; font-weight:700;">Actif</span>
+                        {% else %}
+                            <span style="color:#C62828; font-weight:700;">Désactivé</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <div class="act-dd">
+                            <button type="button" class="act-dd-btn">
+                                Actions <i class="fas fa-chevron-down act-chev"></i>
+                            </button>
+                            <div class="act-dd-menu">
+                                <button type="button" class="act-dd-item" onclick="openModal('editStaffModal{{ employee.id }}')">
+                                    <i class="fas fa-pen"></i> Modifier
+                                </button>
+                                <button type="button" class="act-dd-item dd-gold" onclick="openModal('payStaffModal{{ employee.id }}')">
+                                    <i class="fas fa-money-bill-wave"></i> Payer
+                                </button>
+                                <a href="{% url 'admin_panel:staff_payment_history' employee.id %}" class="act-dd-item">
+                                    <i class="fas fa-history"></i> Historique
+                                </a>
+                                <div class="act-dd-sep"></div>
+                                <button type="button" class="act-dd-item dd-danger" onclick="openModal('deleteStaffModal{{ employee.id }}')">
+                                    <i class="fas fa-trash"></i> Supprimer
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+                {% include 'admin_panel/staff_crud/_edit_staff_modal.html' with employee=employee %}
+                {% include 'admin_panel/staff_crud/_delete_staff_modal.html' with employee=employee %}
+                {% include 'admin_panel/staff_crud/_pay_staff_modal.html' with employee=employee %}
+            {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align:center; padding:30px; color:#888;">
+                        Aucun employé trouvé.
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% include 'admin_panel/staff_crud/_add_staff_modal.html' %}
+{% endblock %}

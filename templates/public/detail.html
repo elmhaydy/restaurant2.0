@@ -1,0 +1,524 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ dish.name }} | L'Héritage Gourmand</title>
+
+    <link rel="icon" type="image/png" href="{% static 'img/herit.logo.png' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/variables.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { background: var(--cream); margin: 0; overflow-x: hidden; }
+
+        /* ── Custom Cursor ── */
+        /* ── Back button ── */
+        .back-nav {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 18px 8px 8px;
+            background: rgba(28, 19, 16, 0.9);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(201,146,42,.28);
+            border-radius: 40px;
+            color: rgba(255,255,255,.96);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: var(--transition);
+            box-shadow: 0 14px 36px rgba(0,0,0,.28);
+            pointer-events: auto;
+        }
+        .back-nav:hover {
+            background: rgba(28, 19, 16, 0.96);
+            color: var(--white);
+            border-color: rgba(201,146,42,.45);
+            transform: translateX(-4px);
+        }
+        .back-nav .back-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gold);
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 800;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .back-nav .back-label {
+            color: inherit;
+            opacity: 1;
+            line-height: 1;
+        }
+
+        /* ── Layout ── */
+        .detail-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 100vh;
+        }
+
+        /* ── Image panel ── */
+        .detail-image-panel {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .detail-image {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transform: scale(1.05);
+            will-change: transform;
+        }
+        .detail-image-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(
+                to right,
+                transparent 60%,
+                rgba(253, 250, 245, 0.15) 100%
+            );
+        }
+        .detail-image-label {
+            position: absolute;
+            bottom: 40px; left: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .detail-category-badge {
+            display: inline-block;
+            background: var(--gold);
+            color: var(--white);
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        /* ── Info panel ── */
+        .detail-info-panel {
+            padding: 80px 72px 80px 64px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: var(--cream);
+        }
+
+        .dish-eyebrow {
+            font-size: 0.68rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--gold);
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .dish-eyebrow::before {
+            content: '';
+            width: 32px; height: 1px;
+            background: var(--gold);
+        }
+
+        .dish-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.8rem, 4.5vw, 4.5rem);
+            font-weight: 300;
+            font-style: italic;
+            color: var(--charcoal);
+            line-height: 1.05;
+            margin-bottom: 28px;
+        }
+        .dish-title strong { font-style: normal; font-weight: 700; display: block; }
+
+        .dish-desc {
+            font-size: 1rem;
+            color: var(--warm-muted);
+            line-height: 1.8;
+            margin-bottom: 36px;
+            font-style: italic;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--cream-border);
+            margin: 32px 0;
+        }
+
+        .detail-actions-top {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 28px;
+        }
+
+        .btn-back-inline {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 22px;
+            border: 1px solid var(--cream-border);
+            border-radius: var(--radius-sm);
+            background: var(--white);
+            color: var(--charcoal);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .btn-back-inline:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            transform: translateY(-2px);
+        }
+
+        /* ── Price ── */
+        .price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 36px;
+        }
+        .price-label {
+            font-size: 0.72rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--warm-muted);
+            font-weight: 600;
+        }
+        .price-value {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            font-weight: 600;
+            color: var(--gold);
+            line-height: 1;
+        }
+        .price-currency {
+            font-size: 1.1rem;
+            font-weight: 400;
+            color: var(--warm-muted);
+        }
+
+        /* ── Ingredients ── */
+        .ingredients-section {
+            background: var(--cream-warm);
+            border: 1px solid var(--cream-border);
+            border-radius: var(--radius-md);
+            padding: 24px 28px;
+            margin-bottom: 36px;
+        }
+        .ingredients-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--charcoal);
+            margin-bottom: 16px;
+        }
+        .ingredients-label i { color: var(--gold); }
+        .ingredients-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .chip {
+            padding: 7px 16px;
+            background: var(--white);
+            border: 1px solid var(--cream-border);
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--charcoal);
+            opacity: 0;
+            transform: scale(0.9);
+        }
+
+        /* ── Cart form ── */
+        .cart-form-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .qty-control {
+            display: flex;
+            align-items: center;
+            border: 1.5px solid var(--cream-border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+        .qty-btn {
+            width: 48px; height: 52px;
+            background: transparent;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--charcoal);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .qty-btn:hover { background: var(--cream-warm); }
+        .qty-input {
+            width: 52px; height: 52px;
+            border: none;
+            border-left: 1.5px solid var(--cream-border);
+            border-right: 1.5px solid var(--cream-border);
+            text-align: center;
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--charcoal);
+            background: var(--white);
+            outline: none;
+        }
+        .btn-add-cart {
+            flex: 1 1 260px;
+            min-width: 260px;
+            min-height: 60px;
+            padding: 17px 32px;
+            background: var(--charcoal);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        .btn-add-cart:hover {
+            background: var(--gold);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(201,146,42,0.35);
+        }
+
+        .cart-actions {
+            display: grid;
+            grid-template-columns: minmax(260px, 1fr) auto;
+            align-items: stretch;
+            gap: 14px;
+            flex: 1;
+            width: 100%;
+        }
+
+        .btn-cart-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-height: 60px;
+            padding: 17px 24px;
+            border: 1.5px solid var(--cream-border);
+            border-radius: var(--radius-sm);
+            background: var(--white);
+            color: var(--charcoal);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .btn-cart-secondary:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            transform: translateY(-2px);
+        }
+
+        .login-note {
+            margin-top: 14px;
+            font-size: 0.82rem;
+            color: var(--warm-muted);
+        }
+
+        @media (max-width: 960px) {
+            .detail-wrap { grid-template-columns: 1fr; }
+            .detail-image-panel { position: relative; height: 55vw; min-height: 320px; }
+            .detail-info-panel { padding: 48px 32px 64px; }
+            .dish-title { font-size: 2.8rem; }
+        }
+        @media (max-width: 600px) {
+            .detail-info-panel { padding: 40px 20px 60px; }
+            .dish-title { font-size: 2.2rem; }
+            .back-nav { top: 12px; left: 12px; padding-right: 8px; }
+            .back-nav .back-label { display: none; }
+            .cart-actions { grid-template-columns: 1fr; }
+            .cart-actions { width: 100%; }
+            .btn-add-cart, .btn-cart-secondary { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<a href="{% url 'menu:list' %}" class="back-nav" id="backNav">
+    <span class="back-icon" aria-hidden="true">←</span>
+    <span class="back-label">Retour au Menu</span>
+</a>
+
+<div class="detail-wrap">
+
+    <!-- ── Image Panel ── -->
+    <div class="detail-image-panel">
+        {% if dish.image %}
+            <img src="{{ dish.image.url }}" alt="{{ dish.name }}" class="detail-image" id="dishImage">
+        {% else %}
+            <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=85" alt="{{ dish.name }}" class="detail-image" id="dishImage">
+        {% endif %}
+        <div class="detail-image-overlay"></div>
+        <div class="detail-image-label">
+            <span class="detail-category-badge">{{ dish.category.name }}</span>
+        </div>
+    </div>
+
+    <!-- ── Info Panel ── -->
+    <div class="detail-info-panel">
+        <div class="detail-actions-top">
+            <a href="{% url 'menu:list' %}" class="btn-back-inline">
+                <i class="fas fa-arrow-left"></i>
+                Retour au menu
+            </a>
+        </div>
+        <div class="dish-eyebrow">{{ dish.category.name }}</div>
+
+        <h1 class="dish-title" id="dishTitle">
+            {{ dish.name }}
+        </h1>
+
+        <p class="dish-desc">
+            {{ dish.description|default:"Un plat préparé avec soin et passion par notre équipe, à partir d'ingrédients soigneusement sélectionnés." }}
+        </p>
+
+        <div class="price-row">
+            <span class="price-label">Prix</span>
+            <span class="price-value">{{ dish.price }}</span>
+            <span class="price-currency">MAD</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Ingredients -->
+        <div class="ingredients-section">
+            <div class="ingredients-label">
+                <i class="fas fa-seedling"></i>
+                Composants du plat
+            </div>
+            {% if dish.composition.all %}
+                <div class="ingredients-chips" id="chipsContainer">
+                    {% for item in dish.composition.all %}
+                        <span class="chip">{{ item.ingredient.name }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color:var(--warm-muted); font-size:0.85rem; margin:0;">
+                    Composition non renseignée.
+                </p>
+            {% endif %}
+        </div>
+
+        <!-- Add to cart -->
+        {% if request.user.is_authenticated %}
+            <form method="post" action="{% url 'orders:cart_add' dish.id %}">
+                {% csrf_token %}
+                <div class="cart-form-row">
+                    <div class="qty-control">
+                        <button type="button" class="qty-btn" onclick="adjustQty(-1)">−</button>
+                        <input type="number" id="qtyInput" name="quantity" value="1" min="1" class="qty-input" readonly>
+                        <button type="button" class="qty-btn" onclick="adjustQty(1)">+</button>
+                    </div>
+                    <div class="cart-actions">
+                        <button type="submit" class="btn-add-cart">
+                            <i class="fas fa-shopping-bag"></i>
+                            Ajouter au panier
+                        </button>
+                        <a href="{% url 'orders:cart' %}" class="btn-cart-secondary">
+                            <i class="fas fa-cart-shopping"></i>
+                            Voir le panier
+                        </a>
+                    </div>
+                </div>
+            </form>
+        {% else %}
+            <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn-add-cart">
+                <i class="fas fa-sign-in-alt"></i>
+                Connectez-vous pour commander
+            </a>
+            <p class="login-note">
+                Vous devez être connecté pour ajouter ce plat à votre panier.
+                <a href="{% url 'accounts:signup_client' %}" style="color:var(--gold); font-weight:600;">Créer un compte →</a>
+            </p>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    /* ── Custom cursor ── */
+    /* ── Entrance animations ── */
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    tl.from('#backNav',    { x: -30, opacity: 0, duration: 0.8, delay: 0.2 })
+      .from('#dishImage',  { scale: 1.1, duration: 1.6, ease: 'power2.out' }, 0)
+      .from('.dish-eyebrow',  { y: 20, opacity: 0, duration: 0.8 }, 0.4)
+      .from('#dishTitle',     { y: 40, opacity: 0, duration: 1   }, 0.55)
+      .from('.dish-desc',     { y: 24, opacity: 0, duration: 0.8 }, 0.7)
+      .from('.price-row',     { y: 20, opacity: 0, duration: 0.7 }, 0.85)
+      .from('.divider',       { scaleX: 0, duration: 0.6, transformOrigin: 'left center' }, 0.95)
+      .from('.ingredients-section', { y: 20, opacity: 0, duration: 0.7 }, 1.05)
+      .from('.cart-form-row, .btn-add-cart', { y: 16, opacity: 0, duration: 0.7 }, 1.2);
+
+    /* ── Stagger chips ── */
+    gsap.to('.chip', {
+        opacity: 1,
+        scale: 1,
+        duration: 0.4,
+        stagger: 0.06,
+        ease: 'back.out(1.5)',
+        delay: 1.3
+    });
+
+    /* ── Quantity ── */
+    function adjustQty(delta) {
+        const input = document.getElementById('qtyInput');
+        const val = parseInt(input.value) + delta;
+        if (val >= 1) input.value = val;
+        gsap.from(input, { scale: 0.9, duration: 0.15, yoyo: true, repeat: 1, ease: 'power2.out' });
+    }
+</script>
+</body>
+</html>

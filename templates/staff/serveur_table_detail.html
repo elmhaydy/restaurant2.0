@@ -1,0 +1,187 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Table {{ table.number }} | Service{% endblock %}
+
+{% block extra_css %}
+<style>
+    .layout {
+        display:grid;
+        grid-template-columns:1fr 380px;
+        gap:22px;
+    }
+
+    .menu-grid {
+        display:grid;
+        grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+        gap:15px;
+    }
+
+    .dish-card {
+        background:white;
+        border-radius:14px;
+        padding:16px;
+        box-shadow:0 4px 12px rgba(0,0,0,.05);
+    }
+
+    .dish-card h4 {
+        margin:0 0 8px;
+    }
+
+    .dish-card form {
+        display:flex;
+        gap:8px;
+        margin-top:12px;
+    }
+
+    .dish-card input {
+        width:70px;
+        padding:8px;
+        border:1px solid #ddd;
+        border-radius:8px;
+    }
+
+    .order-panel {
+        background:white;
+        border-radius:16px;
+        padding:22px;
+        box-shadow:0 6px 18px rgba(0,0,0,.06);
+        height:max-content;
+    }
+
+    .order-item {
+        display:flex;
+        justify-content:space-between;
+        gap:10px;
+        border-bottom:1px solid #eee;
+        padding:12px 0;
+    }
+
+    .status {
+        display:inline-block;
+        background:#FDF5E6;
+        color:#8B4513;
+        padding:6px 12px;
+        border-radius:999px;
+        font-weight:800;
+        font-size:.75rem;
+    }
+
+    .actions {
+        display:grid;
+        gap:10px;
+        margin-top:18px;
+    }
+
+    @media(max-width:900px) {
+        .layout { grid-template-columns:1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'staffops:serveur' %}" class="btn-staff btn-outline-staff" style="margin-bottom:20px;">
+    <i class="fas fa-arrow-left"></i> Retour
+</a>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <div>
+        <h1 style="margin:0;">Table {{ table.number }}</h1>
+        <p style="color:#777;margin:6px 0 0;">
+            {{ table.get_status_display }} • {{ table.capacity }} personnes
+        </p>
+    </div>
+</div>
+
+<div class="layout">
+
+    <div>
+        <h2>Ajouter des plats</h2>
+
+        <div class="menu-grid">
+            {% for dish in dishes %}
+                <div class="dish-card">
+                    <h4>{{ dish.name }}</h4>
+                    <p style="margin:0;color:#777;font-size:.85rem;">
+                        {{ dish.category.name }}
+                    </p>
+
+                    <strong>{{ dish.price }} MAD</strong>
+
+                    <form method="post" action="{% url 'staffops:serveur_add_order_item' table.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="dish_id" value="{{ dish.id }}">
+                        <input type="number" name="quantity" value="1" min="1">
+                        <button class="btn-staff btn-primary-staff" type="submit">
+                            Ajouter
+                        </button>
+                    </form>
+                </div>
+            {% empty %}
+                <div class="staff-card">
+                    Aucun plat disponible.
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <aside class="order-panel">
+        <h2 style="margin-top:0;">Commande</h2>
+
+        {% if order %}
+            <span class="status">{{ order.get_status_display }}</span>
+
+            <div style="margin-top:18px;">
+                {% for item in order.items.all %}
+                    <div class="order-item">
+                        <div>
+                            <strong>{{ item.display_name }}</strong><br>
+                            <small>x{{ item.quantity }}</small>
+                        </div>
+
+                        <strong>{{ item.subtotal }} MAD</strong>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div style="display:flex;justify-content:space-between;font-size:1.2rem;font-weight:900;margin-top:18px;">
+                <span>Total</span>
+                <span>{{ order.total }} MAD</span>
+            </div>
+
+            <div class="actions">
+                {% if order.status == 'PENDING' %}
+                    <a href="{% url 'staffops:serveur_send_order' order.id %}" class="btn-staff btn-primary-staff">
+                        <i class="fas fa-paper-plane"></i>
+                        Envoyer en cuisine
+                    </a>
+                {% endif %}
+
+                {% if order.status == 'READY' %}
+                    <a href="{% url 'staffops:serveur_mark_served' order.id %}" class="btn-staff btn-primary-staff">
+                        <i class="fas fa-concierge-bell"></i>
+                        Marquer comme servie
+                    </a>
+                {% endif %}
+
+                {% if order.status == 'SERVED' %}
+                    <a href="{% url 'staffops:serveur_request_bill' order.id %}" class="btn-staff btn-primary-staff">
+                        <i class="fas fa-receipt"></i>
+                        Demander la facture
+                    </a>
+                {% endif %}
+
+                {% if order.status == 'BILL_REQUESTED' %}
+                    <div style="background:#FFF3E0;color:#EF6C00;padding:12px;border-radius:10px;font-weight:700;">
+                        Facture envoyée au caissier.
+                    </div>
+                {% endif %}
+            </div>
+        {% else %}
+            <p style="color:#777;">
+                Aucune commande ouverte pour cette table.
+            </p>
+        {% endif %}
+    </aside>
+
+</div>
+{% endblock %}

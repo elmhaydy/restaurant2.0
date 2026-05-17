@@ -1,0 +1,99 @@
+<div class="modal" id="viewModal{{ dish.id }}">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2 style="margin:0; font-family:'Playfair Display', serif;">
+                Détails du plat
+            </h2>
+
+            <button type="button" class="close-btn" onclick="closeModal('viewModal{{ dish.id }}')">
+                ×
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div class="dish-view-grid">
+                <div>
+                    {% if dish.image %}
+                        <img src="{{ dish.image.url }}" class="view-img" alt="{{ dish.name }}">
+                    {% else %}
+                        <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=300&q=80"
+                             class="view-img"
+                             alt="{{ dish.name }}">
+                    {% endif %}
+                </div>
+
+                <div>
+                    <h2 style="font-family:'Playfair Display', serif; margin-top:0;">
+                        {{ dish.name }}
+                    </h2>
+
+                    <div class="info-line">
+                        <strong>Catégorie :</strong> {{ dish.category.name }}
+                    </div>
+
+                    <div class="info-line">
+                        <strong>Prix :</strong> {{ dish.price }} MAD
+                    </div>
+
+                    <div class="info-line">
+                        <strong>Coût matière :</strong> {{ dish.material_cost|floatformat:2 }} MAD
+                    </div>
+
+                    <div class="info-line">
+                        <strong>Marge :</strong>
+                        {{ dish.gross_margin|floatformat:2 }} MAD
+                        ({{ dish.margin_percent|floatformat:0 }}%)
+                    </div>
+
+                    <div class="info-line">
+                        <strong>Disponible :</strong>
+                        {% if dish.manual_available %}Oui{% else %}Non{% endif %}
+                    </div>
+
+                    <div class="info-line">
+                        <strong>Populaire :</strong>
+                        {% if dish.is_popular %}Oui{% else %}Non{% endif %}
+                    </div>
+
+                    <div class="info-line">
+                        <strong>Actif :</strong>
+                        {% if dish.is_active %}Oui{% else %}Non{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <hr style="margin:25px 0;">
+
+            <h3 style="font-family:'Playfair Display', serif;">Description</h3>
+
+            <p style="color:#666; line-height:1.7;">
+                {{ dish.description|default:"Aucune description renseignée." }}
+            </p>
+
+            <h3 style="font-family:'Playfair Display', serif;">Composition du plat</h3>
+
+            {% for comp in dish.composition.all %}
+                <span class="ingredient-pill">
+                    <i class="fas fa-seedling"></i>
+                    {{ comp.ingredient.name }} — {{ comp.quantity }} {{ comp.unit }}
+                </span>
+            {% empty %}
+                <p style="color:#888;">Aucune composition renseignée.</p>
+            {% endfor %}
+        </div>
+
+        <div class="modal-footer">
+            <button type="button"
+                    class="action-btn btn-edit"
+                    onclick="closeModal('viewModal{{ dish.id }}'); openModal('editModal{{ dish.id }}')">
+                <i class="fas fa-pen"></i> Modifier
+            </button>
+
+            <button type="button"
+                    class="action-btn btn-view"
+                    onclick="closeModal('viewModal{{ dish.id }}')">
+                Fermer
+            </button>
+        </div>
+    </div>
+</div>

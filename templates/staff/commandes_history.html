@@ -1,0 +1,347 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Historique des commandes | L'Héritage Gourmand{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.06);
+        text-align: center;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.7rem;
+        font-weight: 900;
+        color: #8B4513;
+        margin: 6px 0 2px;
+    }
+
+    .stat-card .stat-label {
+        font-size: .8rem;
+        color: #777;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .filters-bar {
+        background: white;
+        border-radius: 14px;
+        padding: 18px 22px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.06);
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        margin-bottom: 24px;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .filter-group label {
+        font-size: .78rem;
+        font-weight: 700;
+        color: #555;
+        text-transform: uppercase;
+    }
+
+    .filter-group select,
+    .filter-group input[type="date"] {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: .9rem;
+        background: #fafafa;
+        color: #222;
+        min-width: 160px;
+    }
+
+    .filter-group select:focus,
+    .filter-group input[type="date"]:focus {
+        outline: none;
+        border-color: #8B4513;
+    }
+
+    .orders-table-wrap {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.06);
+        overflow: hidden;
+    }
+
+    .orders-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .88rem;
+    }
+
+    .orders-table thead th {
+        background: #f5f0eb;
+        color: #555;
+        font-size: .75rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        padding: 14px 16px;
+        text-align: left;
+        border-bottom: 1px solid #e8e0d8;
+    }
+
+    .orders-table tbody tr {
+        border-bottom: 1px solid #f0f0f0;
+        transition: background .15s;
+    }
+
+    .orders-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .orders-table tbody tr:hover {
+        background: #fdf9f5;
+    }
+
+    .orders-table td {
+        padding: 13px 16px;
+        vertical-align: middle;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .badge-pending   { background:#FFF3CD; color:#856404; }
+    .badge-preparing { background:#CCE5FF; color:#004085; }
+    .badge-cooking   { background:#FFE5B4; color:#7a4a00; }
+    .badge-ready     { background:#D4EDDA; color:#155724; }
+    .badge-served    { background:#D1ECF1; color:#0c5460; }
+    .badge-paid      { background:#D4EDDA; color:#155724; }
+    .badge-cancelled { background:#F8D7DA; color:#721c24; }
+    .badge-bill      { background:#E2D9F3; color:#5a1e9a; }
+    .badge-delivery  { background:#FFF3CD; color:#856404; }
+    .badge-delivered { background:#D4EDDA; color:#155724; }
+
+    .badge-onsite   { background:#E8F4FD; color:#1565C0; }
+    .badge-takeaway { background:#FFF8E1; color:#F57F17; }
+    .badge-livraison{ background:#F3E5F5; color:#6A1B9A; }
+
+    .items-list {
+        font-size: .8rem;
+        color: #555;
+        line-height: 1.6;
+    }
+
+    .total-cell {
+        font-weight: 800;
+        color: #8B4513;
+        white-space: nowrap;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999;
+    }
+
+    .empty-state i {
+        font-size: 2.5rem;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    @media(max-width: 900px) {
+        .orders-table thead th:nth-child(5),
+        .orders-table td:nth-child(5) { display: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:12px;flex-wrap:wrap;">
+    <div>
+        <h1 style="margin:0;">Historique des commandes</h1>
+        <p style="color:#777;margin:6px 0 0;">Toutes les commandes du restaurant.</p>
+    </div>
+</div>
+
+<!-- Statistiques -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Commandes</div>
+        <div class="stat-value">{{ total_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">CA Total</div>
+        <div class="stat-value">{{ ca_total }} MAD</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Payées</div>
+        <div class="stat-value">{{ paid_count }}</div>
+    </div>
+</div>
+
+<!-- Filtres -->
+<form method="get" class="filters-bar">
+    <div class="filter-group">
+        <label>Date</label>
+        <input type="date" name="date" value="{{ current_date }}">
+    </div>
+
+    <div class="filter-group">
+        <label>Statut</label>
+        <select name="status">
+            <option value="">Tous les statuts</option>
+            {% for val, label in statuses %}
+                <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="filter-group">
+        <label>Mode</label>
+        <select name="mode">
+            <option value="">Tous les modes</option>
+            {% for val, label in modes %}
+                <option value="{{ val }}" {% if current_mode == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="filter-group">
+        <label>&nbsp;</label>
+        <div style="display:flex;gap:8px;">
+            <button type="submit" class="btn-staff btn-primary-staff">
+                <i class="fas fa-filter"></i> Filtrer
+            </button>
+            <a href="{% url 'staffops:commandes_history' %}" class="btn-staff btn-outline-staff">
+                <i class="fas fa-times"></i> Reset
+            </a>
+        </div>
+    </div>
+</form>
+
+<!-- Tableau des commandes -->
+<div class="orders-table-wrap">
+    {% if orders %}
+    <table class="orders-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Mode</th>
+                <th>Statut</th>
+                <th>Articles</th>
+                <th>Table / Client</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td><strong>#{{ order.id }}</strong></td>
+
+                <td style="white-space:nowrap;color:#555;">
+                    {{ order.created_at|date:"d/m/Y" }}<br>
+                    <small>{{ order.created_at|date:"H:i" }}</small>
+                </td>
+
+                <td>
+                    {% if order.mode == 'ONSITE' %}
+                        <span class="badge badge-onsite"><i class="fas fa-utensils"></i> Sur place</span>
+                    {% elif order.mode == 'TAKEAWAY' %}
+                        <span class="badge badge-takeaway"><i class="fas fa-shopping-bag"></i> À emporter</span>
+                    {% else %}
+                        <span class="badge badge-livraison"><i class="fas fa-motorcycle"></i> Livraison</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if order.status == 'PENDING' %}
+                        <span class="badge badge-pending">En attente</span>
+                    {% elif order.status == 'PREPARING' %}
+                        <span class="badge badge-preparing">Préparation</span>
+                    {% elif order.status == 'COOKING' %}
+                        <span class="badge badge-cooking">Cuisson</span>
+                    {% elif order.status == 'READY' %}
+                        <span class="badge badge-ready">Prête</span>
+                    {% elif order.status == 'SERVED' %}
+                        <span class="badge badge-served">Servie</span>
+                    {% elif order.status == 'PAID' %}
+                        <span class="badge badge-paid">Payée</span>
+                    {% elif order.status == 'CANCELLED' %}
+                        <span class="badge badge-cancelled">Annulée</span>
+                    {% elif order.status == 'BILL_REQUESTED' %}
+                        <span class="badge badge-bill">Facture demandée</span>
+                    {% elif order.status == 'OUT_FOR_DELIVERY' %}
+                        <span class="badge badge-delivery">En livraison</span>
+                    {% elif order.status == 'DELIVERED' %}
+                        <span class="badge badge-delivered">Livrée</span>
+                    {% else %}
+                        <span class="badge">{{ order.get_status_display }}</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    <div class="items-list">
+                        {% for item in order.items.all %}
+                            {{ item.quantity }}x {{ item.display_name }}<br>
+                        {% empty %}
+                            <span style="color:#bbb;">—</span>
+                        {% endfor %}
+                    </div>
+                </td>
+
+                <td style="color:#555;">
+                    {% if order.table %}
+                        <i class="fas fa-chair" style="color:#8B4513;"></i>
+                        {{ order.table.name }}
+                    {% elif order.customer_name %}
+                        <i class="fas fa-user" style="color:#8B4513;"></i>
+                        {{ order.customer_name }}
+                    {% else %}
+                        <span style="color:#bbb;">—</span>
+                    {% endif %}
+                </td>
+
+                <td class="total-cell">{{ order.total }} MAD</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr style="background:#f5f0eb;">
+                <td colspan="6" style="padding:14px 16px;font-weight:800;text-align:right;color:#555;">
+                    TOTAL ({{ total_count }} commandes)
+                </td>
+                <td style="padding:14px 16px;font-weight:900;font-size:1.1rem;color:#8B4513;white-space:nowrap;">
+                    {{ ca_total }} MAD
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-receipt"></i>
+        <p>Aucune commande trouvée pour ces critères.</p>
+        <a href="{% url 'staffops:commandes_history' %}" class="btn-staff btn-outline-staff">
+            Voir toutes les commandes
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

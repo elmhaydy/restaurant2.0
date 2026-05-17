@@ -1,0 +1,123 @@
+<div class="modal" id="addModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2 style="margin:0; font-family:'Playfair Display', serif;">
+                Ajouter un nouveau plat
+            </h2>
+
+            <button type="button" class="close-btn" onclick="closeModal('addModal')">
+                ×
+            </button>
+        </div>
+
+        <form method="post" action="{% url 'admin_panel:dish_create' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nom du plat</label>
+                        {{ form.name }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Slug</label>
+                        {{ form.slug }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Catégorie</label>
+                        {{ form.category }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Prix de vente</label>
+                        {{ form.price }}
+                    </div>
+
+                    <div class="form-group full">
+                        <label>Description</label>
+                        {{ form.description }}
+                    </div>
+
+                    <div class="form-group full">
+                        <label>Image</label>
+                        {{ form.image }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            {{ form.is_active }}
+                            Actif
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            {{ form.is_popular }}
+                            Populaire
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            {{ form.manual_available }}
+                            Disponible
+                        </label>
+                    </div>
+                </div>
+
+                <hr style="margin:25px 0;">
+
+                <h3 style="font-family:'Playfair Display', serif; margin-bottom:15px;">
+                    Composition du plat <span style="color:#C62828;">*</span>
+                </h3>
+
+                <div id="composition-create">
+                    <div class="composition-row">
+                        <select name="ingredient_id[]" class="form-control" required>
+                            <option value="">Choisir un ingrédient</option>
+                            {% for ingredient in ingredients %}
+                                <option value="{{ ingredient.id }}">
+                                    {{ ingredient.name }} — Stock: {{ ingredient.quantity }} {{ ingredient.unit }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <input type="number" step="0.01" name="quantity[]" class="form-control" placeholder="Qté" required>
+
+                        <select name="unit[]" class="form-control" required>
+                            <option value="g">g</option>
+                            <option value="kg">kg</option>
+                            <option value="ml">ml</option>
+                            <option value="l">l</option>
+                            <option value="piece">pièce</option>
+                        </select>
+
+                        <button type="button" class="action-btn btn-delete" onclick="removeCompositionRow(this)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="button" class="action-btn btn-view" style="margin-top:10px;" onclick="addCompositionRow('composition-create')">
+                    <i class="fas fa-plus"></i> Ajouter un ingrédient
+                </button>
+
+                <div class="composition-summary">
+                    La composition est obligatoire pour permettre la déduction automatique du stock quand une commande passe en préparation.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="action-btn btn-delete" onclick="closeModal('addModal')">
+                    Annuler
+                </button>
+
+                <button type="submit" class="action-btn btn-success">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

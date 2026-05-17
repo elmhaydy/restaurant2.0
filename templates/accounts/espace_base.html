@@ -1,0 +1,232 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mon Espace{% endblock %} | L'Héritage Gourmand</title>
+    <link rel="icon" type="image/png" href="{% static 'img/herit.logo.png' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/variables.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body { font-family: var(--font-sans); background: var(--cream); display: flex; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+        /* ════════ SIDEBAR ════════ */
+        :root { --psb: 272px; }
+
+        .psb {
+            width: var(--psb); flex-shrink: 0;
+            background: var(--charcoal);
+            height: 100vh; position: fixed; top: 0; left: 0;
+            display: flex; flex-direction: column;
+            overflow: hidden; z-index: 200;
+        }
+
+        .psb-logo {
+            display: flex; align-items: center; justify-content: center;
+            padding: 26px 24px 22px;
+            border-bottom: 1px solid rgba(255,255,255,.07);
+            flex-shrink: 0; text-decoration: none;
+        }
+        .psb-logo img {
+            height: 40px; object-fit: contain;
+            filter: brightness(0) invert(1); opacity: .88;
+            transition: opacity .25s;
+        }
+        .psb-logo:hover img { opacity: .55; }
+
+        .psb-profile {
+            padding: 22px 20px 18px;
+            border-bottom: 1px solid rgba(255,255,255,.07);
+            text-align: center; flex-shrink: 0;
+        }
+        .psb-avatar {
+            width: 64px; height: 64px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-hover) 100%);
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-serif); font-size: 1.45rem; font-weight: 700;
+            color: #fff; margin: 0 auto 12px;
+            border: 2.5px solid rgba(255,255,255,.12);
+        }
+        .psb-name  { font-family: var(--font-serif); font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 4px; line-height: 1.3; }
+        .psb-since { font-size: .68rem; color: rgba(255,255,255,.3); }
+
+        .psb-nav { flex: 1; overflow-y: auto; padding: 10px 0; scrollbar-width: none; }
+        .psb-nav::-webkit-scrollbar { display: none; }
+
+        .psb-section { font-size: .54rem; letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.2); padding: 12px 20px 4px; }
+
+        .psb-link {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 20px; font-size: .81rem; font-weight: 500;
+            color: rgba(255,255,255,.48); text-decoration: none;
+            transition: background .15s, color .15s;
+            border-left: 3px solid transparent;
+            background: none; border-top: none; border-right: none; border-bottom: none;
+            width: 100%; cursor: pointer; font-family: var(--font-sans); text-align: left; white-space: nowrap;
+        }
+        .psb-link i { width: 16px; text-align: center; font-size: .8rem; flex-shrink: 0; color: rgba(201,146,42,.5); transition: color .15s; }
+        .psb-link:hover { background: rgba(255,255,255,.05); color: rgba(255,255,255,.85); }
+        .psb-link:hover i { color: var(--gold); }
+        .psb-link.active { border-left-color: var(--gold); color: #fff; background: rgba(201,146,42,.08); }
+        .psb-link.active i { color: var(--gold); }
+        .psb-link.psb-danger { color: rgba(220,53,69,.6); }
+        .psb-link.psb-danger i { color: rgba(220,53,69,.6); }
+        .psb-link.psb-danger:hover { background: rgba(220,53,69,.08); color: #e53935; }
+        .psb-link.psb-danger:hover i { color: #e53935; }
+
+        .psb-divider { height: 1px; background: rgba(255,255,255,.07); margin: 6px 16px; }
+        .psb-foot { flex-shrink: 0; border-top: 1px solid rgba(255,255,255,.07); }
+
+        /* ════════ MAIN ════════ */
+        .pmain { margin-left: var(--psb); flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 100vh; }
+
+        .pmain-bar {
+            position: sticky; top: 0; z-index: 100;
+            background: #fff; border-bottom: 1px solid var(--cream-border);
+            height: 58px; padding: 0 36px;
+            display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+        }
+        .pmain-bar-title { font-family: var(--font-serif); font-size: 1.1rem; font-weight: 700; color: var(--charcoal); }
+        .pmain-bar-back {
+            display: flex; align-items: center; gap: 7px;
+            font-size: .7rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
+            color: var(--warm-muted); text-decoration: none; transition: color .2s;
+        }
+        .pmain-bar-back:hover { color: var(--charcoal); }
+        .mob-btn { display: none; background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--charcoal); padding: 5px; }
+
+        .pmain-body { padding: 30px 36px 80px; display: flex; flex-direction: column; gap: 20px; }
+
+        /* Cards partagées */
+        .pcard { background: #fff; border: 1px solid var(--cream-border); border-radius: var(--radius-lg); overflow: hidden; }
+        .pcard-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 26px; border-bottom: 1px solid var(--cream-border); }
+        .pcard-title { font-family: var(--font-display); font-size: 1.1rem; font-style: italic; color: var(--charcoal); }
+        .pcard-title b { font-style: normal; font-family: var(--font-serif); }
+        .pcard-link { display: flex; align-items: center; gap: 5px; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); text-decoration: none; transition: color .2s; }
+        .pcard-link:hover { color: var(--gold-hover); }
+        .pcard-body { padding: 20px 26px; }
+
+        .sbadge { padding: 4px 12px; border-radius: 20px; font-size: .61rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; }
+        .sbadge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+        .s-pending          { background:#FFF8EC; color:#C07010; }
+        .s-preparing,
+        .s-cooking          { background:#EDF4FF; color:#1565C0; }
+        .s-ready            { background:#F5EEFF; color:#6A1F9E; }
+        .s-served           { background:#EDFAF0; color:#1B7A38; }
+        .s-paid             { background:#E0F7F2; color:#00695C; }
+        .s-cancelled        { background:#FFF0F0; color:#C62828; }
+        .s-confirmed        { background:#E8F5E9; color:#2E7D32; }
+        .s-seated           { background:#E3F2FD; color:#1565C0; }
+        .s-done             { background:#ECEFF1; color:#546E7A; }
+        .s-bill_requested   { background:#FFF8E1; color:#F57F17; }
+        .s-out_for_delivery { background:#F1F8E9; color:#33691E; }
+        .s-delivered        { background:#E8F5E9; color:#2E7D32; }
+
+        .empty-st { text-align: center; padding: 44px 0; color: var(--warm-muted); font-size: .85rem; }
+        .empty-st i { font-size: 2rem; color: var(--cream-border); margin-bottom: 12px; display: block; }
+        .empty-cta { display: inline-block; margin-top: 14px; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); text-decoration: none; transition: color .2s; }
+        .empty-cta:hover { color: var(--gold-hover); }
+
+        .psb-overlay { display: none; position: fixed; inset: 0; background: rgba(13,11,8,.5); z-index: 199; backdrop-filter: blur(4px); }
+        .psb-overlay.on { display: block; }
+
+        @media (max-width: 860px) {
+            .psb { transform: translateX(-100%); transition: transform .3s cubic-bezier(.4,0,.2,1); }
+            .psb.open { transform: translateX(0); }
+            .pmain { margin-left: 0; }
+            .pmain-bar { padding: 0 18px; }
+            .pmain-body { padding: 20px 16px 60px; }
+            .mob-btn { display: block; }
+        }
+
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+
+{% with vname=request.resolver_match.view_name %}
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="psb" id="psb">
+
+    <a href="{% url 'home' %}" class="psb-logo">
+        <img src="{% static 'img/herit.logo.png' %}" alt="L'Héritage Gourmand">
+    </a>
+
+    <div class="psb-profile">
+        <div class="psb-avatar">{{ request.user.username|slice:":2"|upper }}</div>
+        <div class="psb-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+        <div class="psb-since">Membre depuis {{ request.user.date_joined|date:"F Y" }}</div>
+    </div>
+
+    <nav class="psb-nav">
+        <div class="psb-section">Mon Espace</div>
+        <a href="{% url 'accounts:profile' %}" class="psb-link {% if vname == 'accounts:profile' %}active{% endif %}">
+            <i class="fas fa-user"></i> Mon Profil
+        </a>
+        <a href="{% url 'orders:my_orders' %}" class="psb-link {% if vname == 'orders:my_orders' %}active{% endif %}">
+            <i class="fas fa-shopping-bag"></i> Mes Commandes
+        </a>
+        <a href="{% url 'reservations:my_reservations' %}" class="psb-link {% if vname == 'reservations:my_reservations' %}active{% endif %}">
+            <i class="fas fa-calendar-alt"></i> Mes Réservations
+        </a>
+        <div class="psb-divider"></div>
+        <div class="psb-section">Restaurant</div>
+        <a href="{% url 'menu:list' %}" class="psb-link">
+            <i class="fas fa-utensils"></i> Explorer le Menu
+        </a>
+        <a href="{% url 'reservations:create' %}" class="psb-link">
+            <i class="fas fa-calendar-plus"></i> Réserver une Table
+        </a>
+        <a href="{% url 'home' %}" class="psb-link">
+            <i class="fas fa-home"></i> Accueil
+        </a>
+    </nav>
+
+    <div class="psb-foot">
+        <form method="POST" action="{% url 'accounts:logout' %}" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="psb-link psb-danger" style="width:100%;">
+                <i class="fas fa-sign-out-alt"></i> Déconnexion
+            </button>
+        </form>
+    </div>
+
+</aside>
+
+<div class="psb-overlay" id="psbOverlay" onclick="closeSb()"></div>
+
+<!-- ═══ MAIN ═══ -->
+<div class="pmain">
+
+    <header class="pmain-bar">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <button class="mob-btn" onclick="openSb()"><i class="fas fa-bars"></i></button>
+            <span class="pmain-bar-title">{% block page_title %}Mon Espace{% endblock %}</span>
+        </div>
+        <a href="{% url 'home' %}" class="pmain-bar-back">
+            <i class="fas fa-arrow-left"></i> Retour au site
+        </a>
+    </header>
+
+    <div class="pmain-body" id="pmainBody">
+        {% block content %}{% endblock %}
+    </div>
+
+</div>
+
+{% endwith %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+function openSb()  { document.getElementById('psb').classList.add('open'); document.getElementById('psbOverlay').classList.add('on'); }
+function closeSb() { document.getElementById('psb').classList.remove('open'); document.getElementById('psbOverlay').classList.remove('on'); }
+gsap.from('.psb',   { x: -16, opacity: 0, duration: .65, ease: 'power3.out' });
+gsap.from('.pcard, .espace-header', { y: 16, opacity: 0, duration: .55, stagger: .08, ease: 'power3.out', delay: .18 });
+{% block extra_js %}{% endblock %}
+</script>
+</body>
+</html>

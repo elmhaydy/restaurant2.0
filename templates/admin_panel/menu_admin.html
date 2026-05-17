@@ -1,0 +1,466 @@
+{% extends "admin_panel/base.html" %}
+
+{% block title %}Gestion du Menu{% endblock %}
+{% block page_title %}Gestion du Menu{% endblock %}
+
+{% block extra_css %}
+.btn-add {
+    background:#8B4513;
+    color:white;
+    padding:10px 25px;
+    border-radius:8px;
+    font-weight:700;
+    border:none;
+    cursor:pointer;
+    text-transform:uppercase;
+    font-size:.85rem;
+    text-decoration:none;
+}
+
+.dish-cell {
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+.dish-img {
+    width:58px;
+    height:58px;
+    border-radius:10px;
+    object-fit:cover;
+    background:#EEE;
+}
+
+.status-active {
+    background:#E8F5E9;
+    color:#2E7D32;
+}
+
+.status-out {
+    background:#FFEBEE;
+    color:#C62828;
+}
+
+.status-hidden {
+    background:#ECEFF1;
+    color:#546E7A;
+}
+
+.composition-preview {
+    font-size:.8rem;
+    color:#777;
+    margin-top:5px;
+}
+
+.actions-cell {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.action-btn {
+    border:none;
+    padding:8px 12px;
+    border-radius:8px;
+    font-size:.78rem;
+    font-weight:700;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+}
+
+.btn-view {
+    background:#E3F2FD;
+    color:#1976D2;
+}
+
+.btn-edit {
+    background:#FFF3E0;
+    color:#EF6C00;
+}
+
+.btn-delete {
+    background:#FFEBEE;
+    color:#C62828;
+}
+
+.btn-success {
+    background:#E8F5E9;
+    color:#2E7D32;
+}
+
+.modal {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+}
+
+.modal.active {
+    display:flex;
+}
+
+.modal-card {
+    background:white;
+    width:95%;
+    max-width:850px;
+    max-height:90vh;
+    overflow-y:auto;
+    border-radius:18px;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
+}
+
+.modal-header,
+.modal-footer {
+    padding:20px 30px;
+    background:#FDF5E6;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.modal-body {
+    padding:30px;
+}
+
+.close-btn {
+    border:none;
+    background:transparent;
+    font-size:1.6rem;
+    cursor:pointer;
+}
+
+.form-control {
+    width:100%;
+    padding:12px;
+    border:1px solid #DDD;
+    border-radius:8px;
+    box-sizing:border-box;
+}
+
+.form-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+}
+
+.form-group label {
+    display:block;
+    font-weight:700;
+    font-size:.85rem;
+    margin-bottom:8px;
+}
+
+.form-group.full {
+    grid-column:span 2;
+}
+
+.composition-row {
+    display:grid;
+    grid-template-columns:2fr 1fr 1fr auto;
+    gap:10px;
+    margin-bottom:10px;
+    align-items:center;
+}
+
+.composition-summary {
+    background:#FDF5E6;
+    border:1px solid #F3E0C0;
+    border-radius:10px;
+    padding:15px;
+    margin-top:15px;
+    font-size:.9rem;
+}
+
+.dish-view-grid {
+    display:grid;
+    grid-template-columns:190px 1fr;
+    gap:25px;
+}
+
+.view-img {
+    width:190px;
+    height:190px;
+    border-radius:14px;
+    object-fit:cover;
+    background:#EEE;
+}
+
+.info-line {
+    margin-bottom:10px;
+    color:#555;
+}
+
+.info-line strong {
+    color:#222;
+}
+
+.ingredient-pill {
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:#FDF5E6;
+    color:#8B4513;
+    border-radius:30px;
+    padding:8px 12px;
+    margin:4px;
+    font-size:.85rem;
+    font-weight:700;
+}
+
+.empty-row {
+    text-align:center;
+    padding:35px;
+    color:#888;
+}
+
+.menu-toolbar {
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+
+.menu-filter-form {
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+
+.menu-filter-input,
+.menu-filter-select {
+    padding:10px 12px;
+    border:1px solid #DDD;
+    border-radius:10px;
+    background:#FFF;
+}
+
+.menu-filter-input {
+    min-width:220px;
+}
+
+.menu-filter-select {
+    min-width:190px;
+}
+
+.menu-filter-reset {
+    color:#666;
+    font-weight:700;
+    text-decoration:none;
+}
+
+@media(max-width:900px) {
+    .form-grid,
+    .dish-view-grid,
+    .composition-row {
+        grid-template-columns:1fr;
+    }
+}
+{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="content-card" style="margin-bottom:20px; padding:15px;">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="content-card">
+    <div class="card-header">
+        <h2>Liste des Plats</h2>
+
+        <div class="menu-toolbar">
+            <form method="GET" class="menu-filter-form">
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ search }}"
+                    placeholder="Rechercher un plat..."
+                    class="menu-filter-input"
+                >
+
+                <select name="category" class="menu-filter-select">
+                    <option value="">Toutes les catégories</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit" class="action-btn btn-view">
+                    <i class="fas fa-filter"></i> Filtrer
+                </button>
+
+                {% if search or selected_category %}
+                    <a href="{% url 'admin_panel:menu_admin' %}" class="menu-filter-reset">Réinitialiser</a>
+                {% endif %}
+            </form>
+
+            <button type="button" class="btn-add" onclick="openModal('addModal')">
+                <i class="fas fa-plus"></i> Ajouter un Plat
+            </button>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Plat</th>
+                <th>Catégorie</th>
+                <th>Prix</th>
+                <th>Coût matière</th>
+                <th>Marge</th>
+                <th>Disponible</th>
+                <th>Populaire</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for dish in dishes %}
+            <tr>
+                <td>
+                    <div class="dish-cell">
+                        {% if dish.image %}
+                            <img src="{{ dish.image.url }}" class="dish-img" alt="{{ dish.name }}">
+                        {% else %}
+                            <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=100&q=80" class="dish-img" alt="{{ dish.name }}">
+                        {% endif %}
+
+                        <div>
+                            <div style="font-weight:700;">{{ dish.name }}</div>
+                            <div style="font-size:.75rem; color:#888;">
+                                ID: #MENU-{{ dish.id|stringformat:"03d" }}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+
+                <td>{{ dish.category.name }}</td>
+
+                <td><strong>{{ dish.price }} MAD</strong></td>
+
+                <td>
+                    {{ dish.material_cost|floatformat:2 }} MAD
+                    <div class="composition-preview">
+                        {{ dish.composition.count }} ingrédient(s)
+                    </div>
+                </td>
+
+                <td>
+                    {{ dish.gross_margin|floatformat:2 }} MAD
+                    <div class="composition-preview">
+                        {{ dish.margin_percent|floatformat:0 }}%
+                    </div>
+                </td>
+
+                <td>{% if dish.manual_available %}Oui{% else %}Non{% endif %}</td>
+                <td>{% if dish.is_popular %}Oui{% else %}Non{% endif %}</td>
+
+                <td>
+                    {% if not dish.is_active %}
+                        <span class="status-badge status-hidden">Masqué</span>
+                    {% elif dish.manual_available %}
+                        <span class="status-badge status-active">Disponible</span>
+                    {% else %}
+                        <span class="status-badge status-out">Rupture</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    <div class="act-dd">
+                        <button type="button" class="act-dd-btn">
+                            Actions <i class="fas fa-chevron-down act-chev"></i>
+                        </button>
+                        <div class="act-dd-menu">
+                            <button type="button" class="act-dd-item" onclick="openModal('viewModal{{ dish.id }}')">
+                                <i class="fas fa-eye"></i> Voir
+                            </button>
+                            <button type="button" class="act-dd-item" onclick="openModal('editModal{{ dish.id }}')">
+                                <i class="fas fa-pen"></i> Modifier
+                            </button>
+                            <div class="act-dd-sep"></div>
+                            <button type="button" class="act-dd-item dd-danger" onclick="openModal('deleteModal{{ dish.id }}')">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </button>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+
+            {% include 'admin_panel/menu_crud/_view_modal.html' with dish=dish %}
+            {% include 'admin_panel/menu_crud/_edit_modal.html' with dish=dish ingredients=ingredients categories=categories %}
+            {% include 'admin_panel/menu_crud/_delete_modal.html' with dish=dish %}
+
+            {% empty %}
+            <tr>
+                <td colspan="9" class="empty-row">
+                    Aucun plat disponible. Ajoutez votre premier plat.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% include 'admin_panel/menu_crud/_add_modal.html' with ingredients=ingredients form=form %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.add('active');
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.remove('active');
+}
+
+function addCompositionRow(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const firstRow = container.querySelector(".composition-row");
+    if (!firstRow) return;
+
+    const newRow = firstRow.cloneNode(true);
+
+    newRow.querySelectorAll("input, select").forEach(input => {
+        input.value = "";
+    });
+
+    container.appendChild(newRow);
+}
+
+function removeCompositionRow(button) {
+    const row = button.closest(".composition-row");
+    const container = row.parentElement;
+
+    if (container.querySelectorAll(".composition-row").length > 1) {
+        row.remove();
+    }
+}
+
+window.addEventListener("click", function(e) {
+    document.querySelectorAll(".modal.active").forEach(function(modal) {
+        if (e.target === modal) {
+            modal.classList.remove("active");
+        }
+    });
+});
+</script>
+{% endblock %}

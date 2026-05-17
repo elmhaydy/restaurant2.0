@@ -1,0 +1,416 @@
+{% extends 'staff/base_staff.html' %}
+{% load static %}
+
+{% block title %}Caisse | L'Héritage Gourmand{% endblock %}
+
+{% block extra_css %}
+<style>
+    .caisse-layout {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 20px;
+    }
+
+    .orders-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 18px;
+    }
+
+    .order-btn {
+        background: white;
+        border: 2px solid #eee;
+        border-radius: 14px;
+        padding: 18px;
+        text-decoration: none;
+        color: #222;
+        box-shadow: 0 4px 10px rgba(0,0,0,.05);
+        transition: .2s;
+    }
+
+    .order-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px rgba(0,0,0,.08);
+    }
+
+    .order-btn.active {
+        background: #8B4513;
+        color: white;
+        border-color: #8B4513;
+    }
+
+    .order-num {
+        font-size: 1.2rem;
+        font-weight: 800;
+    }
+
+    .order-status {
+        font-size: .75rem;
+        text-transform: uppercase;
+        margin-top: 5px;
+        font-weight: 700;
+    }
+
+    .bill {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 6px 18px rgba(0,0,0,.06);
+        height: max-content;
+    }
+
+    .bill-header {
+        text-align: center;
+        border-bottom: 2px dashed #ddd;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+    }
+
+    .bill-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: .9rem;
+        gap: 12px;
+    }
+
+    .bill-total {
+        border-top: 2px solid #333;
+        padding-top: 20px;
+        margin-top: 20px;
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-weight: 800;
+        font-size: 1.2rem;
+    }
+
+    .payment-methods {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .pay-btn {
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        background: white;
+        cursor: pointer;
+        font-weight: 700;
+        text-align: center;
+        display: block;
+        transition: .2s;
+    }
+
+    .pay-btn:hover {
+        background: #FDF5E6;
+        border-color: #8B4513;
+    }
+
+    .pay-btn input {
+        margin-bottom: 8px;
+    }
+
+    .empty-bill {
+        text-align: center;
+        color: #777;
+        padding: 40px 0;
+    }
+
+    .history-card {
+        margin-top: 25px;
+        background: white;
+        border-radius: 16px;
+        padding: 22px;
+        box-shadow: 0 6px 18px rgba(0,0,0,.06);
+    }
+
+    .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .history-total {
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: #8B4513;
+        white-space: nowrap;
+    }
+
+    .cash-summary {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .cash-box {
+        padding: 16px;
+        border-radius: 14px;
+        font-weight: 800;
+    }
+
+    .cash-box span {
+        display: block;
+        font-size: 1.35rem;
+        margin-top: 6px;
+    }
+
+    .cash-box.cash {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+
+    .cash-box.card {
+        background: #E3F2FD;
+        color: #1976D2;
+    }
+
+    .payment-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        border-bottom: 1px solid #eee;
+        padding: 13px 0;
+    }
+
+    .payment-row:last-child {
+        border-bottom: none;
+    }
+
+    .payment-method {
+        font-size: .78rem;
+        font-weight: 700;
+        color: #777;
+        margin-top: 4px;
+    }
+
+    @media(max-width: 950px) {
+        .caisse-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .cash-summary {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .bill, .bill * {
+            visibility: visible;
+        }
+        .bill {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-shadow: none;
+            border-radius: 0;
+        }
+        .bill form,
+        .bill button {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="caisse-layout">
+
+    <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;gap:15px;">
+            <div>
+                <h1 style="margin:0;">Gestion de Caisse</h1>
+                <p style="color:#777;margin:6px 0 0;">
+                    Commandes sur place avec facture demandée.
+                </p>
+            </div>
+
+            <button class="btn-staff btn-outline-staff">
+                <i class="fas fa-lock"></i>
+                Clôture de Caisse
+            </button>
+        </div>
+
+        <div class="orders-grid">
+            {% for order in orders %}
+                <a href="?order={{ order.id }}"
+                   class="order-btn {% if selected_order and selected_order.id == order.id %}active{% endif %}">
+
+                    <div class="order-num">#CMD-{{ order.id }}</div>
+
+                    <div class="order-status">
+                        {{ order.get_status_display }}
+                    </div>
+
+                    <small>
+                        {% if order.table %}
+                            {{ order.table.name }} - Table {{ order.table.number }}
+                        {% else %}
+                            Sans table
+                        {% endif %}
+                    </small>
+
+                    <div style="margin-top:10px;font-weight:800;">
+                        {{ order.total }} MAD
+                    </div>
+                </a>
+            {% empty %}
+                <div class="staff-card">
+                    Aucune facture demandée pour le moment.
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="history-card">
+            <div class="history-header">
+                <div>
+                    <h2 style="margin:0;">Historique des paiements du jour</h2>
+                    <p style="color:#777;margin:6px 0 0;">
+                        Factures encaissées aujourd’hui.
+                    </p>
+                </div>
+
+                <div class="history-total">
+                    {{ total_today }} MAD
+                </div>
+            </div>
+
+            <div class="cash-summary">
+                <div class="cash-box cash">
+                    <i class="fas fa-money-bill-wave"></i>
+                    Espèces en caisse
+                    <span>{{ cash_total_today }} MAD</span>
+                </div>
+
+                <div class="cash-box card">
+                    <i class="fas fa-credit-card"></i>
+                    Paiements carte
+                    <span>{{ card_total_today }} MAD</span>
+                </div>
+            </div>
+
+            {% for payment in payments_today %}
+                <div class="payment-row">
+                    <div>
+                        <strong>Facture #{{ payment.order.id }}</strong><br>
+
+                        <div class="payment-method">
+                            {{ payment.get_method_display }}
+                            • {{ payment.paid_at|date:"H:i" }}
+
+                            {% if payment.cashier %}
+                                • {{ payment.cashier.get_full_name|default:payment.cashier.username }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <strong>{{ payment.amount }} MAD</strong>
+                </div>
+            {% empty %}
+                <p style="color:#777;">Aucun paiement aujourd’hui.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="bill">
+        {% if selected_order %}
+            <div class="bill-header">
+                <img src="{% static 'img/herit.logo.png' %}" alt="L'Héritage" style="height:75px;margin-bottom:8px;">
+                <h2 style="font-family:serif;margin:0;">L'Héritage</h2>
+
+                <p style="margin-bottom:0;">
+                    Commande #{{ selected_order.id }}
+
+                    {% if selected_order.table %}
+                        <br>
+                        {{ selected_order.table.name }} - Table {{ selected_order.table.number }}
+                    {% endif %}
+                </p>
+
+                <small style="color:#777;">
+                    {{ selected_order.created_at|date:"d/m/Y H:i" }}
+                </small>
+            </div>
+
+            <div>
+                {% for item in selected_order.items.all %}
+                    <div class="bill-item">
+                        <span>
+                            {{ item.quantity }}x {{ item.display_name }}
+                        </span>
+
+                        <strong>
+                            {{ item.subtotal }} MAD
+                        </strong>
+                    </div>
+                {% empty %}
+                    <p style="color:#777;">Aucun article dans cette commande.</p>
+                {% endfor %}
+            </div>
+
+            <div class="bill-total">
+                <div class="total-row" style="font-size:.9rem;font-weight:400;color:#666;">
+                    <span>Sous-total</span>
+                    <span>{{ selected_order.total }} MAD</span>
+                </div>
+
+                <div class="total-row">
+                    <span>TOTAL</span>
+                    <span>{{ selected_order.total }} MAD</span>
+                </div>
+
+                <form method="post" action="{% url 'staffops:caissier_pay_order' selected_order.id %}">
+                    {% csrf_token %}
+
+                    <div class="payment-methods">
+                        <label class="pay-btn">
+                            <input type="radio" name="method" value="CASH" checked>
+                            <i class="fas fa-money-bill-wave"></i><br>
+                            Espèces
+                        </label>
+
+                        <label class="pay-btn">
+                            <input type="radio" name="method" value="CARD">
+                            <i class="fas fa-credit-card"></i><br>
+                            Carte
+                        </label>
+                    </div>
+
+                    <button type="submit"
+                            class="btn-staff btn-primary-staff"
+                            style="width:100%;margin-top:20px;justify-content:center;">
+                        <i class="fas fa-check-circle"></i>
+                        Encaisser et envoyer au nettoyage
+                    </button>
+                </form>
+
+                <button onclick="window.print()"
+                        class="btn-staff btn-outline-staff"
+                        style="width:100%;margin-top:10px;justify-content:center;">
+                    <i class="fas fa-print"></i>
+                    Imprimer la facture
+                </button>
+            </div>
+        {% else %}
+            <div class="empty-bill">
+                <i class="fas fa-receipt" style="font-size:2rem;"></i>
+                <p>Sélectionne une commande pour afficher la facture.</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

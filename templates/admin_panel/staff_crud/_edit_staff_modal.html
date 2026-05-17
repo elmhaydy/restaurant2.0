@@ -1,0 +1,138 @@
+<div class="modal" id="editStaffModal{{ employee.id }}">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2>Modifier {{ employee.username }}</h2>
+
+            <button
+                type="button"
+                class="close-btn"
+                onclick="closeModal('editStaffModal{{ employee.id }}')">
+                ×
+            </button>
+        </div>
+
+        <form method="POST" action="{% url 'admin_panel:staff_update' employee.id %}">
+            {% csrf_token %}
+
+            <div class="modal-body">
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label>Username</label>
+
+                        <input
+                            type="text"
+                            name="username"
+                            class="form-control"
+                            value="{{ employee.username }}"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email</label>
+
+                        <input
+                            type="email"
+                            name="email"
+                            class="form-control"
+                            value="{{ employee.email }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Prénom</label>
+
+                        <input
+                            type="text"
+                            name="first_name"
+                            class="form-control"
+                            value="{{ employee.first_name }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nom</label>
+
+                        <input
+                            type="text"
+                            name="last_name"
+                            class="form-control"
+                            value="{{ employee.last_name }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Téléphone</label>
+
+                        <input
+                            type="text"
+                            name="phone"
+                            class="form-control"
+                            value="{{ employee.phone }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Rôle</label>
+
+                        <select name="role" class="form-control">
+
+                            <option value="MANAGER"
+                                {% if employee.role == 'MANAGER' %}selected{% endif %}>
+                                Manager
+                            </option>
+
+                            <option value="CHEF"
+                                {% if employee.role == 'CHEF' %}selected{% endif %}>
+                                Chef cuisinier
+                            </option>
+
+                            <option value="CAISSIER"
+                                {% if employee.role == 'CAISSIER' %}selected{% endif %}>
+                                Caissier
+                            </option>
+
+                            <option value="SERVEUR"
+                                {% if employee.role == 'SERVEUR' %}selected{% endif %}>
+                                Serveur
+                            </option>
+
+                            <option value="MENAGE"
+                                {% if employee.role == 'MENAGE' %}selected{% endif %}>
+                                Femme de ménage
+                            </option>
+
+                            <option value="LIVREUR"
+                                {% if employee.role == 'LIVREUR' %}selected{% endif %}>
+                                Livreur
+                            </option>
+
+                        </select>
+                    </div>
+
+                    <div class="form-group full">
+                        <label style="display:flex;align-items:center;gap:10px;">
+
+                            <input
+                                type="checkbox"
+                                name="is_active"
+                                {% if employee.is_active %}checked{% endif %}>
+
+                            Employé actif
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn-cancel"
+                    onclick="closeModal('editStaffModal{{ employee.id }}')">
+                    Annuler
+                </button>
+
+                <button type="submit" class="btn-save">
+                    Sauvegarder
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

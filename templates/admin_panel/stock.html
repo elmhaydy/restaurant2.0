@@ -1,0 +1,414 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Gestion du Stock{% endblock %}
+{% block page_title %}Gestion du Stock{% endblock %}
+
+{% block extra_css %}
+.stock-layout {
+    display: grid;
+    grid-template-columns: 1.8fr 1fr;
+    gap: 24px;
+}
+
+.stock-bar-bg {
+    width: 100px;
+    height: 8px;
+    background: #EEE;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.stock-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+}
+
+.status-ok { background: #E8F5E9; color: #2E7D32; }
+.status-low { background: #FFF3E0; color: #EF6C00; }
+.status-critical { background: #FFEBEE; color: #C62828; }
+.status-hidden { background: #ECEFF1; color: #546E7A; }
+
+.action-btn {
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-right: 6px;
+}
+
+.edit-btn { background: #FFF3E0; color: #EF6C00; }
+.delete-btn { background: #FFEBEE; color: #C62828; }
+.info-btn { background: #E3F2FD; color: #1976D2; }
+
+.alert-box {
+    background: #FFF3E0;
+    color: #EF6C00;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.category-list {
+    display: grid;
+    gap: 12px;
+}
+
+.category-card {
+    border: 1px solid #EEE;
+    border-radius: 12px;
+    padding: 16px;
+    background: #FFF;
+}
+
+.category-meta {
+    color: #777;
+    font-size: .85rem;
+    margin-top: 4px;
+}
+
+.category-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+}
+
+.category-inline-stat {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #FDF5E6;
+    color: #8B4513;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+.stock-toolbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.stock-filter-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.stock-filter-select {
+    min-width: 190px;
+    padding: 10px 12px;
+    border: 1px solid #DDD;
+    border-radius: 10px;
+    background: #FFF;
+}
+
+.stock-filter-reset {
+    color: #666;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+@media(max-width: 1100px) {
+    .stock-layout {
+        grid-template-columns: 1fr;
+    }
+}
+{% endblock %}
+
+{% block content %}
+{% if low_stock_items %}
+    <div class="alert-box">
+        <i class="fas fa-exclamation-triangle"></i>
+        Attention : {{ low_stock_items|length }} ingrédient(s) sont sous le seuil d’alerte.
+    </div>
+{% endif %}
+
+<div class="stock-layout">
+    <div class="content-card">
+        <div class="card-header">
+            <h2>Inventaire des Ingrédients</h2>
+
+            <div class="stock-toolbar">
+                <form method="GET" class="stock-filter-form">
+                    <select name="category" class="stock-filter-select" onchange="this.form.submit()">
+                        <option value="">Toutes les catégories</option>
+                        <option value="uncategorized" {% if selected_category == "uncategorized" %}selected{% endif %}>
+                            Sans catégorie
+                        </option>
+                        {% for category in stock_categories %}
+                            <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    {% if selected_category %}
+                        <a href="{% url 'admin_panel:stock' %}" class="stock-filter-reset">Réinitialiser</a>
+                    {% endif %}
+                </form>
+
+                <button type="button" class="btn-add" onclick="openModal('addIngredientModal')">
+                    + Ajouter un ingrédient
+                </button>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Catégorie</th>
+                    <th>Ingrédient</th>
+                    <th>Quantité</th>
+                    <th>Seuil</th>
+                    <th>Niveau</th>
+                    <th>Statut</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for ingredient in ingredients %}
+                    <tr>
+                        <td>
+                            {% if ingredient.category %}
+                                {{ ingredient.category.name }}
+                            {% else %}
+                                <span style="color:#888;">Sans catégorie</span>
+                            {% endif %}
+                        </td>
+
+                        <td><strong>{{ ingredient.name }}</strong></td>
+
+                        <td>{{ ingredient.quantity }} {{ ingredient.unit }}</td>
+
+                        <td>{{ ingredient.alert_threshold }} {{ ingredient.unit }}</td>
+
+                        <td>
+                            {% if ingredient.level == "correct" %}
+                                <span class="status-badge status-ok">Correct</span>
+                            {% elif ingredient.level == "moyen" %}
+                                <span class="status-badge status-low">Moyen</span>
+                            {% else %}
+                                <span class="status-badge status-critical">Faible</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <div class="stock-bar-bg">
+                                {% if ingredient.level == "faible" %}
+                                    <div class="stock-bar-fill" style="width: {{ ingredient.stock_percent }}%; background: #C62828;"></div>
+                                {% elif ingredient.level == "moyen" %}
+                                    <div class="stock-bar-fill" style="width: {{ ingredient.stock_percent }}%; background: #EF6C00;"></div>
+                                {% else %}
+                                    <div class="stock-bar-fill" style="width: {{ ingredient.stock_percent }}%; background: #2E7D32;"></div>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="act-dd">
+                                <button type="button" class="act-dd-btn">
+                                    Actions <i class="fas fa-chevron-down act-chev"></i>
+                                </button>
+                                <div class="act-dd-menu">
+                                    <button type="button" class="act-dd-item" onclick="openModal('editIngredientModal{{ ingredient.id }}')">
+                                        <i class="fas fa-pen"></i> Modifier
+                                    </button>
+                                    <div class="act-dd-sep"></div>
+                                    <button type="button" class="act-dd-item dd-danger" onclick="openModal('deleteIngredientModal{{ ingredient.id }}')">
+                                        <i class="fas fa-trash"></i> Supprimer
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    {% include 'admin_panel/stock_crud/_edit_stock_modal.html' with ingredient=ingredient stock_categories=stock_categories %}
+                    {% include 'admin_panel/stock_crud/_delete_stock_modal.html' with ingredient=ingredient %}
+                {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align:center; padding:30px; color:#888;">
+                            Aucun ingrédient trouvé.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="content-card">
+        <div class="card-header">
+            <h2>Catégories de Stock</h2>
+
+            <button type="button" class="btn-add" onclick="openModal('addIngredientCategoryModal')">
+                + Ajouter une catégorie
+            </button>
+        </div>
+
+        <div class="category-list">
+            {% for category in stock_categories %}
+                <div class="category-card">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+                        <div>
+                            <strong>{{ category.name }}</strong>
+                            <div class="category-meta">Slug : {{ category.slug }}</div>
+                            <div class="category-meta">Ordre : {{ category.ordering }}</div>
+                        </div>
+
+                        {% if category.is_active %}
+                            <span class="status-badge status-ok">Active</span>
+                        {% else %}
+                            <span class="status-badge status-hidden">Inactive</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="category-inline-stat">
+                        {{ category.ingredients.count }} ingrédient(s)
+                    </div>
+
+                    <div class="category-actions">
+                        <div class="act-dd">
+                            <button type="button" class="act-dd-btn">
+                                Actions <i class="fas fa-chevron-down act-chev"></i>
+                            </button>
+                            <div class="act-dd-menu">
+                                <button type="button" class="act-dd-item" onclick="openModal('editIngredientCategoryModal{{ category.id }}')">
+                                    <i class="fas fa-pen"></i> Modifier
+                                </button>
+                                <div class="act-dd-sep"></div>
+                                <button type="button" class="act-dd-item dd-danger" onclick="openModal('deleteIngredientCategoryModal{{ category.id }}')">
+                                    <i class="fas fa-trash"></i> Supprimer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal" id="editIngredientCategoryModal{{ category.id }}">
+                    <div class="modal-card" style="max-width:560px;">
+                        <div class="modal-header">
+                            <h2>Modifier {{ category.name }}</h2>
+                            <button type="button" class="close-btn" onclick="closeModal('editIngredientCategoryModal{{ category.id }}')">×</button>
+                        </div>
+
+                        <form method="POST" action="{% url 'admin_panel:ingredient_category_update' category.id %}">
+                            {% csrf_token %}
+
+                            <div class="modal-body">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label>Nom</label>
+                                        <input type="text" name="name" class="form-control" value="{{ category.name }}" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Slug</label>
+                                        <input type="text" name="slug" class="form-control" value="{{ category.slug }}" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Ordre</label>
+                                        <input type="number" name="ordering" min="0" class="form-control" value="{{ category.ordering }}" required>
+                                    </div>
+
+                                    <div class="form-group" style="display:flex; align-items:flex-end;">
+                                        <label style="display:flex; gap:10px; align-items:center;">
+                                            <input type="checkbox" name="is_active" {% if category.is_active %}checked{% endif %}>
+                                            Active
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn-cancel" onclick="closeModal('editIngredientCategoryModal{{ category.id }}')">Annuler</button>
+                                <button type="submit" class="btn-save">Sauvegarder</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="modal" id="deleteIngredientCategoryModal{{ category.id }}">
+                    <div class="modal-card" style="max-width:520px;">
+                        <div class="modal-header">
+                            <h2>Confirmer la suppression</h2>
+                            <button type="button" class="close-btn" onclick="closeModal('deleteIngredientCategoryModal{{ category.id }}')">×</button>
+                        </div>
+
+                        <form method="POST" action="{% url 'admin_panel:ingredient_category_delete' category.id %}">
+                            {% csrf_token %}
+
+                            <div class="modal-body">
+                                <p>Voulez-vous vraiment supprimer cette catégorie de stock ?</p>
+
+                                <h3 style="color:#8B4513; margin-bottom:8px;">{{ category.name }}</h3>
+
+                                <p style="color:#666;">
+                                    Cette catégorie contient <strong>{{ category.ingredients.count }} ingrédient(s)</strong>.
+                                </p>
+
+                                {% if category.ingredients.exists %}
+                                    <div style="background:#FFF3E0; color:#EF6C00; padding:15px; border-radius:10px; margin-top:18px;">
+                                        La suppression sera remplacée par une désactivation si des ingrédients y sont encore rattachés.
+                                    </div>
+                                {% else %}
+                                    <div style="background:#FFEBEE; color:#C62828; padding:15px; border-radius:10px; margin-top:18px;">
+                                        Cette action est définitive.
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn-cancel" onclick="closeModal('deleteIngredientCategoryModal{{ category.id }}')">Annuler</button>
+                                <button type="submit" class="btn-confirm-delete">Supprimer</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% empty %}
+                <div style="color:#888; text-align:center; padding:24px 0;">
+                    Aucune catégorie de stock trouvée.
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% include 'admin_panel/stock_crud/_add_stock_modal.html' %}
+
+<div class="modal" id="addIngredientCategoryModal">
+    <div class="modal-card" style="max-width:560px;">
+        <div class="modal-header">
+            <h2>Ajouter une catégorie de stock</h2>
+            <button type="button" class="close-btn" onclick="closeModal('addIngredientCategoryModal')">×</button>
+        </div>
+
+        <form method="POST" action="{% url 'admin_panel:ingredient_category_create' %}">
+            {% csrf_token %}
+
+            <div class="modal-body">
+                <div class="form-grid">
+                    {% for field in category_form %}
+                        <div class="form-group">
+                            <label>{{ field.label }}</label>
+                            {{ field }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('addIngredientCategoryModal')">Annuler</button>
+                <button type="submit" class="btn-save">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

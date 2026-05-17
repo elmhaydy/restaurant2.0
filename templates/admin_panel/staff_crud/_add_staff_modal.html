@@ -1,0 +1,28 @@
+<div class="modal" id="addStaffModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2>Ajouter un employé</h2>
+            <button type="button" class="close-btn" onclick="closeModal('addStaffModal')">×</button>
+        </div>
+
+        <form method="POST" action="{% url 'admin_panel:staff_create' %}">
+            {% csrf_token %}
+
+            <div class="modal-body">
+                <div class="form-grid">
+                    {% for field in create_form %}
+                        <div class="form-group {% if field.name == 'password' or field.name == 'email' %}full{% endif %}">
+                            <label>{{ field.label }}</label>
+                            {{ field }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('addStaffModal')">Annuler</button>
+                <button type="submit" class="btn-save">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>

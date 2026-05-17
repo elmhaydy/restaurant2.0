@@ -1,0 +1,332 @@
+{% extends "public/base.html" %}
+{% load static %}
+
+{% block title %}Contact | L'Héritage Gourmand{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contact-page {
+        background: var(--cream);
+    }
+
+    /* ── Hero ── */
+    .contact-hero {
+        margin-top: calc(var(--nh) * -1);
+        padding: calc(90px + var(--nh)) 0 80px;
+        background:
+            linear-gradient(to top, rgba(253, 250, 245, 0.9) 0%, rgba(253, 250, 245, 0.78) 38%, rgba(13,11,8,0.38) 100%),
+            url("{% static 'img/contact.png' %}") center/cover no-repeat;
+        position: relative;
+        overflow: hidden;
+    }
+    .contact-hero::before {
+        content: '"';
+        position: absolute;
+        right: -30px; top: -60px;
+        font-family: var(--font-display);
+        font-size: 28rem;
+        color: var(--cream-warm);
+        line-height: 1;
+        pointer-events: none;
+    }
+    .contact-hero-eyebrow {
+        font-size: 0.68rem;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--gold);
+        font-weight: 600;
+        margin-bottom: 16px;
+        display: block;
+    }
+    .contact-hero-title {
+        font-family: var(--font-display);
+        font-size: clamp(3rem, 6vw, 5.5rem);
+        font-weight: 300;
+        font-style: italic;
+        color: var(--charcoal);
+        line-height: 1.05;
+        margin-bottom: 20px;
+        max-width: 640px;
+    }
+    .contact-hero-title strong { font-style: normal; font-weight: 700; }
+    .contact-hero-sub {
+        font-size: 1rem;
+        color: var(--warm-muted);
+        max-width: 480px;
+        line-height: 1.7;
+    }
+
+    /* ── Body ── */
+    .contact-body {
+        padding: 0 0 100px;
+    }
+    .contact-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.4fr;
+        gap: 64px;
+        align-items: start;
+    }
+
+    /* ── Info cards ── */
+    .contact-info-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .contact-info-card {
+        background: var(--white);
+        border: 1px solid var(--cream-border);
+        border-radius: var(--radius-md);
+        padding: 28px 30px;
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+    .contact-info-card:hover {
+        box-shadow: var(--shadow-md);
+        border-color: var(--cream-deep);
+    }
+    .contact-info-icon {
+        width: 52px; height: 52px;
+        background: var(--cream-warm);
+        border: 1px solid var(--cream-border);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--gold);
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    .contact-info-title {
+        font-size: 0.7rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--warm-muted);
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+    .contact-info-value {
+        font-family: var(--font-serif);
+        font-size: 1rem;
+        color: var(--charcoal);
+        line-height: 1.5;
+    }
+
+    /* Opening hours card */
+    .hours-card {
+        background: var(--charcoal);
+        border: 1px solid var(--charcoal);
+        border-radius: var(--radius-md);
+        padding: 28px 30px;
+    }
+    .hours-title {
+        font-size: 0.7rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--gold);
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+    .hours-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        font-size: 0.85rem;
+    }
+    .hours-row:last-child { border-bottom: none; }
+    .hours-day { color: rgba(255,255,255,0.5); }
+    .hours-time { color: var(--white); font-weight: 500; }
+
+    /* ── Contact form ── */
+    .contact-form-wrap {
+        background: var(--white);
+        border: 1px solid var(--cream-border);
+        border-radius: var(--radius-lg);
+        padding: 48px 44px;
+        box-shadow: var(--shadow-sm);
+    }
+    .form-title {
+        font-family: var(--font-display);
+        font-size: 1.8rem;
+        font-style: italic;
+        font-weight: 300;
+        color: var(--charcoal);
+        margin-bottom: 8px;
+    }
+    .form-title strong { font-style: normal; font-weight: 700; }
+    .form-subtitle {
+        font-size: 0.85rem;
+        color: var(--warm-muted);
+        margin-bottom: 32px;
+        padding-bottom: 28px;
+        border-bottom: 1px solid var(--cream-border);
+    }
+    .form-group { margin-bottom: 20px; }
+    .form-label {
+        display: block;
+        font-size: 0.7rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: var(--charcoal);
+        margin-bottom: 8px;
+    }
+    .form-input, .form-textarea {
+        width: 100%;
+        padding: 13px 16px;
+        background: var(--cream);
+        border: 1.5px solid var(--cream-border);
+        border-radius: var(--radius-sm);
+        font-family: var(--font-sans);
+        font-size: 0.9rem;
+        color: var(--charcoal);
+        transition: border-color 0.25s, box-shadow 0.25s;
+        outline: none;
+    }
+    .form-input:focus, .form-textarea:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 3px rgba(201,146,42,0.12);
+        background: var(--white);
+    }
+    .form-textarea { resize: vertical; min-height: 130px; }
+
+    .alert-success {
+        background: #F0FAF0;
+        border: 1px solid #C3E6C3;
+        color: #2E7D32;
+        padding: 14px 18px;
+        border-radius: var(--radius-sm);
+        margin-bottom: 24px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    @media (max-width: 900px) {
+        .contact-grid { grid-template-columns: 1fr; gap: 40px; }
+        .contact-form-wrap { padding: 32px 24px; }
+        .contact-hero::before { display: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="contact-page">
+
+    <!-- ── Hero ── -->
+    <div class="contact-hero">
+        <div class="container">
+            <span class="contact-hero-eyebrow">Nous sommes à votre écoute</span>
+            <h1 class="contact-hero-title">
+                Entrons en<br>
+                <strong>Contact</strong>
+            </h1>
+            <p class="contact-hero-sub">
+                Une question, une suggestion ou une demande spéciale ? Notre équipe vous répondra dans les plus brefs délais.
+            </p>
+        </div>
+    </div>
+
+    <!-- ── Body ── -->
+    <div class="contact-body">
+        <div class="container">
+            <div class="contact-grid">
+
+                <!-- Left: Info -->
+                <div>
+                    <div class="contact-info-stack reveal">
+                        <div class="contact-info-card">
+                            <div class="contact-info-icon"><i class="fas fa-map-marker-alt"></i></div>
+                            <div>
+                                <div class="contact-info-title">Adresse</div>
+                                <div class="contact-info-value">33 Rue de la Gastronomie<br>33-34 Casablanca, Maroc</div>
+                            </div>
+                        </div>
+                        <div class="contact-info-card">
+                            <div class="contact-info-icon"><i class="fas fa-phone"></i></div>
+                            <div>
+                                <div class="contact-info-title">Téléphone</div>
+                                <div class="contact-info-value">+212 522 123456</div>
+                            </div>
+                        </div>
+                        <div class="contact-info-card">
+                            <div class="contact-info-icon"><i class="fas fa-envelope"></i></div>
+                            <div>
+                                <div class="contact-info-title">Email</div>
+                                <div class="contact-info-value">contact@lheritage.ma</div>
+                            </div>
+                        </div>
+                        <div class="hours-card">
+                            <div class="hours-title">Horaires d'ouverture</div>
+                            <div class="hours-row">
+                                <span class="hours-day">Lundi</span>
+                                <span class="hours-time">Fermé</span>
+                            </div>
+                            <div class="hours-row">
+                                <span class="hours-day">Mar – Ven</span>
+                                <span class="hours-time">12h – 15h • 19h – 23h</span>
+                            </div>
+                            <div class="hours-row">
+                                <span class="hours-day">Sam – Dim</span>
+                                <span class="hours-time">12h – 23h</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Form -->
+                <div class="contact-form-wrap reveal">
+                    <h2 class="form-title">Envoyez-nous<br><strong>un Message</strong></h2>
+                    <p class="form-subtitle">Remplissez le formulaire ci-dessous et nous vous répondrons rapidement.</p>
+
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert-success">
+                                <i class="fas fa-check-circle" style="margin-right:8px;"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label class="form-label">Votre Nom</label>
+                            <input type="text" name="name" class="form-input"
+                                   placeholder="Prénom Nom"
+                                   value="{{ request.user.get_full_name|default:'' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Adresse Email</label>
+                            <input type="email" name="email" class="form-input"
+                                   placeholder="votre@email.com"
+                                   value="{{ request.user.email|default:'' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Votre Message</label>
+                            <textarea name="message" class="form-textarea"
+                                      placeholder="Décrivez votre demande..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn-main" style="width:100%; padding:16px; font-size:0.82rem;">
+                            <i class="fas fa-paper-plane"></i>
+                            Envoyer le Message
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+gsap.from('.contact-hero > .container > *', {
+    y: 30, opacity: 0, duration: 1, stagger: 0.15, ease: 'power3.out', delay: 0.2
+});
+</script>
+{% endblock %}

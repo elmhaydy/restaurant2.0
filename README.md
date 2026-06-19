@@ -1,117 +1,145 @@
-# 🍽️ Restaurant Management System
+# L'Heritage Gourmand
 
-Application web de gestion de restaurant permettant d'optimiser les opérations quotidiennes, la gestion des commandes et le suivi des activités du restaurant.
+Application web Django de gestion de restaurant. Le projet regroupe un espace public pour les clients, un espace d'administration, et des interfaces metier selon les roles du personnel.
 
-## 🚀 Fonctionnalités
+## Fonctionnalites
 
-### 👥 Gestion des utilisateurs
+- Consultation du menu public avec categories et fiches plats
+- Reservation de tables
+- Creation et suivi des commandes
+- Gestion des tables du restaurant
+- Gestion du stock et des ingredients
+- Gestion du personnel et historique de paiement
+- Tableau de bord d'administration
+- Authentification avec redirection selon le role utilisateur
 
-* Authentification sécurisée
-* Gestion des rôles utilisateurs
-* Tableau de bord personnalisé
+## Stack technique
 
-### 🍔 Gestion du menu
+- Python 3.12+ recommande
+- Django 5.2
+- PostgreSQL
+- Django REST Framework
+- Django Jazzmin
+- Pillow, ReportLab
 
-* Ajout, modification et suppression des plats
-* Gestion des catégories
-* Gestion des prix et descriptions
-* Gestion des disponibilités
+Des dependances liees a `channels`, `redis` et `celery` sont presentes dans `requirements.txt`, mais la configuration visible du projet est surtout centree sur l'application web Django classique.
 
-### 📋 Gestion des commandes
+## Applications Django
 
-* Création de commandes
-* Suivi de l'état des commandes
-* Historique des commandes
-* Gestion des tables
+- `accounts` : utilisateurs, roles, authentification
+- `menu` : categories, plats, composition par ingredient
+- `orders` : commandes et lignes de commande
+- `reservations` : reservations clients
+- `tables` : tables, capacites, statuts
+- `stock` : ingredients et mouvements de stock
+- `staffops` : interfaces metier pour chef, caissier, serveur, livreur, menage, manager
+- `admin_panel` : back-office fonctionnel du restaurant
+- `audit` : journalisation et suivi d'activite
+- `core` : pages publiques et commande de demo
 
-### 💰 Gestion financière
-
-* Calcul automatique des montants
-* Suivi des ventes
-* Statistiques et rapports
-* Historique des paiements
-
-### 📊 Tableau de bord
-
-* Nombre de commandes
-* Chiffre d'affaires
-* Plats les plus vendus
-* Statistiques en temps réel
-
-## 🛠️ Technologies utilisées
-
-### Frontend
-
-* HTML5
-* CSS3
-* JavaScript
-
-### Backend
-
-* PHP
-
-### Base de données
-
-* MySQL
-
-## 📸 Captures d'écran
-
-Ajoutez ici les captures d'écran de l'application.
-
-### Dashboard
-
-![Dashboard](screenshots/dashboard.png)
-
-### Gestion des commandes
-
-![Orders](screenshots/orders.png)
-
-### Gestion du menu
-
-![Menu](screenshots/menu.png)
-
-## ⚙️ Installation
-
-### Prérequis
-
-* PHP 8+
-* MySQL
-* XAMPP / WAMP / Laragon
-
-### Étapes
-
-1. Cloner le projet
+## Installation
 
 ```bash
-git clone https://github.com/elmhaydy/restaurant2.0.git
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-2. Importer la base de données MySQL
+## Configuration
 
-3. Configurer la connexion à la base de données
+Le projet attend une base PostgreSQL. Creez un fichier `.env` a la racine avec au minimum :
 
-4. Lancer le serveur local
+```env
+DB_NAME=restaurant_db
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_HOST=127.0.0.1
+
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+EMAIL_HOST=
+EMAIL_PORT=587
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
+DEFAULT_FROM_EMAIL=contact@example.com
+CONTACT_RECIPIENT_EMAIL=contact@example.com
+```
+
+Notes :
+
+- Il n'y a pas de fichier `.env.example` dans le depot.
+- `DEBUG` est active dans les settings actuels.
+- La `SECRET_KEY` est definie en dur dans [restaurant_config/settings.py](/abs/path/C:/Users/elmeh/OneDrive/Bureau/restauration-main/restaurant_config/settings.py:1), ce qui convient pour du developpement mais pas pour la production.
+
+## Initialisation
 
 ```bash
-http://localhost/restaurant2.0
+python manage.py migrate
+python manage.py seed_demo
+python manage.py runserver
 ```
 
-## 🎯 Objectifs du projet
+Application disponible par defaut sur `http://127.0.0.1:8000/`.
 
-Ce projet a été développé dans le but de :
+## Comptes de demonstration
 
-* Simplifier la gestion d'un restaurant
-* Centraliser les opérations quotidiennes
-* Automatiser le suivi des commandes
-* Améliorer l'expérience utilisateur
+La commande `seed_demo` cree les comptes suivants avec le mot de passe `Pass12345!` :
 
-## 👨‍💻 Auteur
+- `admin`
+- `chef`
+- `caissier`
+- `menage`
+- `client`
 
-**El Mehdi Bougrin**
+## Routes utiles
 
-* Portfolio : https://elmehdibougrin.netlify.app
-* GitHub : https://github.com/elmhaydy
+- `/` : accueil
+- `/contact/` : contact
+- `/menu/` : carte du restaurant
+- `/reservations/` : reservations
+- `/orders/` : commandes
+- `/accounts/login/` : connexion
+- `/accounts/signup/client/` : inscription client
+- `/staff/chef/` : espace chef
+- `/staff/caissier/` : espace caissier
+- `/staff/serveur/` : espace serveur
+- `/staff/livreur/` : espace livreur
+- `/staff/manager/` : espace manager
+- `/admin-panel/` : panneau d'administration metier
+- `/django-admin/` : administration Django
 
----
+## Arborescence rapide
 
-⭐ N'hésitez pas à laisser une étoile si le projet vous plaît.
+```text
+accounts/           gestion des utilisateurs et roles
+admin_panel/        back-office restaurant
+audit/              journalisation
+core/               pages publiques et commandes utilitaires
+menu/               catalogue des plats
+orders/             commandes
+payments/           paiements
+reservations/       reservations
+restaurant_config/  configuration Django
+staffops/           espaces personnel
+stock/              ingredients et stock
+tables/             gestion des tables
+templates/          templates HTML
+static/             assets statiques
+media/              images uploadees
+```
+
+## Commandes utiles
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py seed_demo
+```
+
+## Points d'attention
+
+- Le projet est actuellement configure pour PostgreSQL uniquement.
+- Le depot contient des fichiers `media/` et `debug.log`, ce qui indique un usage principalement local/developpement.
+- Si vous preparez un deploiement, il faudra externaliser la `SECRET_KEY`, desactiver `DEBUG`, renseigner `ALLOWED_HOSTS` et durcir la configuration email/base de donnees.
